@@ -1,0 +1,29 @@
+import requests
+from os import environ
+import pprint as pp
+from collections import ChainMap, defaultdict
+from newsapi import NewsApiClient
+
+
+
+def test():
+
+    url = "https://free-news.p.rapidapi.com/v1/search"  
+
+    querystring = {"q": "Elon Musk", "lang": "en"}  
+
+    headers = {
+        'x-rapidapi-key': "de679aecb8msh2c32b96279f1282p1b408bjsn045cc4df80c0",
+        'x-rapidapi-host': "free-news.p.rapidapi.com"
+    }   
+
+    the_news = requests.request("GET", url, headers=headers, params=querystring).json()
+
+    #print(pp.pformat(response))
+    for article in the_news['articles']:
+        print(article['title'])
+                       
+test()
+
+
+
