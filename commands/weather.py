@@ -1,3 +1,4 @@
+from discord import client
 from pyzipcode import ZipCodeDatabase
 import pprint as pp
 import discord
@@ -5,11 +6,16 @@ from discord.ext import commands
 from discord.ext.commands import bot
 import requests
 from os import environ
+import sqlite3
+
 
 class weather(commands.Cog, name="weather"):
-    def __init__(self,bot) -> None:
+    def __init__(self, bot) -> None:
         self.bot = bot
+        self.client = discord.Client()
         self.weather_token = environ['WEATHER_API_KEY']
+    intents = discord.Intents.default()
+    intents.members = True
 
     @commands.command(name='weather', help='responds with weather at user location')
     async def weather(self, context, user_location):
@@ -32,14 +38,14 @@ class weather(commands.Cog, name="weather"):
         weather_icon = weather['weather'][0]['icon']
         icon_url = f'http://openweathermap.org/img/wn/{weather_icon}@2x.png'
         embed = discord.Embed(
-            title = f'Weather in {zip.city}, {zip.state}'
+            title=f'Weather in {zip.city}, {zip.state}'
         )
-        
+
         embed.add_field(
-            name = 'Current conditions', value=f'**{current_conditions}**', inline=False
+            name='Current conditions', value=f'**{current_conditions}**', inline=False
         )
         embed.add_field(
-            name = 'Temp', value=f'**{current_temp}**', inline=False
+            name='Temp', value=f'**{current_temp}**', inline=False
         )
         embed.add_field(
             name='Feels Like', value=f'**{feels_like}**', inline=False

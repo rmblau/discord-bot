@@ -3,7 +3,6 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import bot
 import requests
-from newsapi import NewsApiClient
 from os import environ
 
 
@@ -14,7 +13,7 @@ class news(commands.Cog, name="news"):
 
     @commands.command(name='news', help='responds with news about a topic')
     async def news(self, context, topic,):
-        
+
         url = "https://free-news.p.rapidapi.com/v1/search"
 
         querystring = {"q": f"{topic}", "lang": "en",
@@ -26,9 +25,9 @@ class news(commands.Cog, name="news"):
         }
 
         the_news = requests.get(
-        url, headers=headers, params=querystring).json()
+            url, headers=headers, params=querystring).json()
         for article in the_news['articles']:
-            
+
             embed = discord.Embed(
                 title=f'Top headlines'
             )
@@ -48,5 +47,3 @@ class news(commands.Cog, name="news"):
 
 def setup(bot):
     bot.add_cog(news(bot))
-
-
