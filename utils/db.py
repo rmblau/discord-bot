@@ -1,3 +1,4 @@
+from os import environ
 from os.path import isfile
 from sqlite3 import connect
 import sqlite3
@@ -19,9 +20,6 @@ class Database():
         except Error as e:
             logging.info(e)
 
-        finally:
-            if conn:
-                conn.close()
         return conn
 
     def create_table(db_file):
@@ -35,18 +33,33 @@ class Database():
                 ''')
 
     def insert(user_id, user_location):
-        db = sqlite3.connect('roran.db')
+        db = sqlite3.connect(environ['DB_NAME'])
         cursor = db.cursor()
         sql = f"INSERT INTO main(user_id, weather_loc) VALUES(?,?)"
         values = (user_id, user_location)
         cursor.execute(sql, values)
         db.commit()
+        db.close()
 
-    def update(user_id, user_location):
-        db = sqlite3.connect('roran.db')
+    def update(user_location, user_id):
+        db = sqlite3.connect(environ['DB_NAME'])
         cursor = db.cursor()
         sql = (
-            'UPDATE main SET weather_loc = ? where user_id = ? ')
+            f'UPDATE main SET weather_loc = ? where user_id = ? ')
         values = (user_id, user_location)
         cursor.execute(sql, values)
         db.commit()
+        db.close()
+
+    def get_location(user_id):
+
+        db = sqlite3.connect(environ['DB_NAME'])
+        cursor = db.cursor()
+        sql = (
+            f'SELECT weather_loc FROM main where user_id = ?'
+        )
+        values = (user_id,)
+        cursor.execute(sql, values)
+        result = cursor.fetchone()
+        db.commit()
+        print(result)
