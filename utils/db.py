@@ -33,6 +33,7 @@ class Database():
                 ''')
 
     def insert(user_id, user_location):
+        
         db = sqlite3.connect(environ['DB_NAME'])
         cursor = db.cursor()
         sql = f"INSERT INTO main(user_id, weather_loc) VALUES(?,?)"
@@ -63,3 +64,4 @@ class Database():
         result = cursor.fetchone()
         db.commit()
         print(result)
+        return result
