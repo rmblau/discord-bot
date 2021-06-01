@@ -29,12 +29,14 @@ class general(commands.Cog, name="general"):
 
         await context.send(embed=embed)
 
-    @commands.command(name='set', help='set various variables', intents=intents)
+    @commands.command(name='set', help='set various variables')
     async def set(self, context, user_location):
         user_id = context.author.id
         cursor = self.conn.cursor()
-        cursor.execute(
-            f"SELECT user_id FROM main WHERE user_id = {user_id}")
+        sql = f"SELECT user_id FROM main WHERE user_id = ?"
+        values = (user_id,)
+        cursor.execute(sql, values)
+
         result = cursor.fetchone()
         if result is None:
 
