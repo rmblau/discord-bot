@@ -1,3 +1,0 @@
-pyzipcode
-discord
-requests
