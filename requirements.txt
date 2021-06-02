@@ -1,7 +1,4 @@
 pyzipcode
 discord
-<<<<<<< HEAD
 requests
-=======
-requests
->>>>>>> 28b8b305bb9fa633ca9800858173233f92c83860
+pgeocode>=0.3.0

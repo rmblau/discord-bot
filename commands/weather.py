@@ -6,6 +6,7 @@ from discord.ext import commands
 from discord.ext.commands import bot
 from utils import db
 import requests
+import pgeocode
 from os import environ
 import sqlite3
 
@@ -18,15 +19,16 @@ class weather(commands.Cog, name="weather"):
         self.conn = db.Database.create_connection(environ['DB_NAME'])
 
     @commands.command(name='weather', help='responds with weather at user location')
-    async def weather(self, context, user_location=None):
+    async def weather(self, context, user_location=None, country_code='US'):
+
         if user_location is not None:
 
-            await self.show_weather(context, user_location)
+            await self.show_weather(context, user_location, country_code)
         else:
 
             user_id = context.author.id
             cursor = self.conn.cursor()
-            sql = f"SELECT weather_loc FROM main WHERE user_id =?"
+            sql = f"SELECT weather_loc FROM main WHERE user_id = ?"
             values = (user_id,)
             cursor.execute(sql, values)
             result = cursor.fetchone()
@@ -36,20 +38,26 @@ class weather(commands.Cog, name="weather"):
 
             elif result is not None:
                 user_location = db.Database.get_location(user_id)[0]
-                await self.show_weather(context, user_location)
+                country_code = db.Database.get_country_code(user_id)[0]
+                await self.show_weather(context, user_location, country_code)
 
-    async def show_weather(self, context, user_location):
-        zcdb = ZipCodeDatabase()
-        zip = zcdb[user_location]
+    async def show_weather(self, context, user_location, country_code):
+        country_code = country_code
+        nomi = pgeocode.Nominatim(country_code)
+        zipcode = nomi.query_postal_code(user_location)
+        lat = zipcode['latitude']
+        lon = zipcode['longitude']
         url = "http://api.openweathermap.org/data/2.5/weather"
         params = {
-            'zip': f'{user_location},us',
+            'lon': lon,
+            'lat': lat,
             'units': 'imperial',
             'appid': self.weather_token
         }
         headers = {}
         response = requests.get(url, headers=headers, params=params)
         weather = response.json()
+        print(weather)
         current_conditions = weather['weather'][0]['description']
         current_temp = weather['main']['temp']
         feels_like = weather['main']['feels_like']
@@ -57,7 +65,7 @@ class weather(commands.Cog, name="weather"):
         weather_icon = weather['weather'][0]['icon']
         icon_url = f'http://openweathermap.org/img/wn/{weather_icon}@2x.png'
         embed = discord.Embed(
-            title=f'Weather in {zip.city}, {zip.state}'
+            title=f"Weather in {zipcode['county_name']}, {zipcode['state_name']}"
         )
         embed.add_field(
             name='Current conditions', value=f'**{current_conditions}**', inline=False

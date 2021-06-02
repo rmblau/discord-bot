@@ -28,26 +28,27 @@ class Database():
         cursor.execute(
             ''' CREATE TABLE IF NOT EXISTS main(
                 user_id TEXT,
-                weather_loc TEXT
+                weather_loc TEXT,
+                country_code TEXT
                 )
                 ''')
 
-    def insert(user_id, user_location):
-        
+    def insert(user_id, user_location, country_code):
+
         db = sqlite3.connect(environ['DB_NAME'])
         cursor = db.cursor()
-        sql = f"INSERT INTO main(user_id, weather_loc) VALUES(?,?)"
-        values = (user_id, user_location)
+        sql = f"INSERT INTO main(user_id, weather_loc, country_code) VALUES(?,?,?)"
+        values = (user_id, user_location, country_code)
         cursor.execute(sql, values)
         db.commit()
         db.close()
 
-    def update(user_location, user_id):
+    def update(user_id, user_location, country_code='US'):
         db = sqlite3.connect(environ['DB_NAME'])
         cursor = db.cursor()
         sql = (
-            f'UPDATE main SET weather_loc = ? where user_id = ? ')
-        values = (user_id, user_location)
+            f'UPDATE main SET weather_loc = ?, country_code = ? where user_id = ? ')
+        values = (user_location, country_code, user_id)
         cursor.execute(sql, values)
         db.commit()
         db.close()
@@ -58,6 +59,20 @@ class Database():
         cursor = db.cursor()
         sql = (
             f'SELECT weather_loc FROM main where user_id = ?'
+        )
+        values = (user_id,)
+        cursor.execute(sql, values)
+        result = cursor.fetchone()
+        db.commit()
+        print(result)
+        return result
+
+    def get_country_code(user_id):
+
+        db = sqlite3.connect(environ['DB_NAME'])
+        cursor = db.cursor()
+        sql = (
+            f'SELECT country_code FROM main where user_id = ?'
         )
         values = (user_id,)
         cursor.execute(sql, values)

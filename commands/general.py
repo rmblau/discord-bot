@@ -30,7 +30,7 @@ class general(commands.Cog, name="general"):
         await context.send(embed=embed)
 
     @commands.command(name='set', help='set various variables')
-    async def set(self, context, user_location):
+    async def set(self, context, user_location, country_code):
         user_id = context.author.id
         cursor = self.conn.cursor()
         sql = f"SELECT user_id FROM main WHERE user_id = ?"
@@ -40,13 +40,13 @@ class general(commands.Cog, name="general"):
         result = cursor.fetchone()
         if result is None:
 
-            db.Database.insert(user_id, user_location)
-            await context.send(f"Prefered location set to {user_location}")
+            db.Database.insert(user_id, user_location, country_code)
+            await context.send(f"Prefered location set to {user_location} {country_code}")
 
         elif result is not None:
 
-            db.Database.update(user_id, user_location)
-            await context.send(f"Location set to {user_location}!")
+            db.Database.update(user_id, user_location, country_code)
+            await context.send(f"Location set to {user_location} {country_code}!")
 
     @commands.command(name='test', help='used for testing')
     async def test(self, context):
