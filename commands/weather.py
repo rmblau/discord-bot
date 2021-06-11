@@ -1,5 +1,4 @@
 from discord import client
-from pyzipcode import ZipCodeDatabase
 import pprint as pp
 import discord
 from discord.ext import commands
@@ -7,6 +6,7 @@ from discord.ext.commands import bot
 from utils import db
 import requests
 import pgeocode
+import aiohttp
 from os import environ
 import sqlite3
 
@@ -19,11 +19,14 @@ class weather(commands.Cog, name="weather"):
         self.conn = db.Database.create_connection(environ['DB_NAME'])
 
     @commands.command(name='weather', help='responds with weather at user location')
-    async def weather(self, context, user_location=None, country_code='US'):
+    async def weather(self, context, user_location=None, units='imperial', country_code='US'):
 
         if user_location is not None:
+            try:
 
-            await self.show_weather(context, user_location, country_code)
+                await self.show_weather(context, user_location, units, country_code)
+            except KeyError:
+                await context.send(f'Location not set')
         else:
 
             user_id = context.author.id
@@ -34,15 +37,17 @@ class weather(commands.Cog, name="weather"):
             result = cursor.fetchone()
             print(f'Result is:{result}')
             if result is None:
+                print(result)
                 await context.send(f'Prefered location not set, please set with "!set"')
 
             elif result is not None:
+                print(result)
                 user_location = db.Database.get_location(user_id)[0]
+                units = db.Database.get_units(user_id)[0]
                 country_code = db.Database.get_country_code(user_id)[0]
-                await self.show_weather(context, user_location, country_code)
+                await self.show_weather(context, user_location, units, country_code)
 
-    async def show_weather(self, context, user_location, country_code):
-        country_code = country_code
+    async def show_weather(self, context, user_location, units='imperial', country_code='US'):
         nomi = pgeocode.Nominatim(country_code)
         zipcode = nomi.query_postal_code(user_location)
         lat = zipcode['latitude']
@@ -51,36 +56,55 @@ class weather(commands.Cog, name="weather"):
         params = {
             'lon': lon,
             'lat': lat,
-            'units': 'imperial',
+            'units': units,
             'appid': self.weather_token
         }
         headers = {}
-        response = requests.get(url, headers=headers, params=params)
-        weather = response.json()
-        print(weather)
-        current_conditions = weather['weather'][0]['description']
-        current_temp = weather['main']['temp']
-        feels_like = weather['main']['feels_like']
-        huminity = weather['main']['humidity']
-        weather_icon = weather['weather'][0]['icon']
-        icon_url = f'http://openweathermap.org/img/wn/{weather_icon}@2x.png'
-        embed = discord.Embed(
-            title=f"Weather in {zipcode['county_name']}, {zipcode['state_name']}"
-        )
-        embed.add_field(
-            name='Current conditions', value=f'**{current_conditions}**', inline=False
-        )
-        embed.add_field(
-            name='Temp', value=f'**{current_temp}**', inline=False
-        )
-        embed.add_field(
-            name='Feels Like', value=f'**{feels_like}**', inline=False
-        )
-        embed.add_field(
-            name='Humidity', value=f'**{huminity} %**', inline=False
-        )
-        embed.set_thumbnail(url=icon_url)
-        await context.send(embed=embed)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers, params=params) as response:
+                weather = await response.json()
+                print(weather)
+                current_conditions = weather['weather'][0]['description']
+                current_temp = weather['main']['temp']
+                feels_like = weather['main']['feels_like']
+                huminity = weather['main']['humidity']
+                weather_icon = weather['weather'][0]['icon']
+                icon_url = f'http://openweathermap.org/img/wn/{weather_icon}@2x.png'
+                if country_code == 'US':
+                    embed = discord.Embed(
+                        title=f"Weather in {zipcode['place_name']}, {zipcode['state_name']}"
+                    )
+                    embed.add_field(
+                        name='Current conditions', value=f'**{current_conditions}**', inline=False
+                    )
+                    embed.add_field(
+                        name='Temp', value=f'**{current_temp}**', inline=False
+                    )
+                    embed.add_field(
+                        name='Feels Like', value=f'**{feels_like}**', inline=False
+                    )
+                    embed.add_field(
+                        name='Humidity', value=f'**{huminity} %**', inline=False
+                    )
+                    embed.set_thumbnail(url=icon_url)
+                else:
+                    embed = discord.Embed(
+                        title=f"Weather in {zipcode['county_name']}, {zipcode['state_name']}"
+                    )
+                    embed.add_field(
+                        name='Current conditions', value=f'**{current_conditions}**', inline=False
+                    )
+                    embed.add_field(
+                        name='Temp', value=f'**{current_temp}**', inline=False
+                    )
+                    embed.add_field(
+                        name='Feels Like', value=f'**{feels_like}**', inline=False
+                    )
+                    embed.add_field(
+                        name='Humidity', value=f'**{huminity} %**', inline=False
+                    )
+                    embed.set_thumbnail(url=icon_url)
+                await context.send(embed=embed)
 
 
 def setup(bot):
