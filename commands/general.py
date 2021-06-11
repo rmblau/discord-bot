@@ -23,14 +23,14 @@ class general(commands.Cog, name="general"):
 
         embed.add_field(
             name="Pong!",
-            value=":ping_pong",
+            value=":ping_pong:",
             inline=True
         )
 
         await context.send(embed=embed)
 
     @commands.command(name='set', help='set various variables')
-    async def set(self, context, user_location, country_code):
+    async def set(self, context, user_location, country_code='US', units='imperial'):
         user_id = context.author.id
         cursor = self.conn.cursor()
         sql = f"SELECT user_id FROM main WHERE user_id = ?"
@@ -40,28 +40,13 @@ class general(commands.Cog, name="general"):
         result = cursor.fetchone()
         if result is None:
 
-            db.Database.insert(user_id, user_location, country_code)
-            await context.send(f"Prefered location set to {user_location} {country_code}")
+            db.Database.insert(user_id, user_location, country_code, units)
+            await context.send(f"Prefered location set to {user_location} {country_code} with {units}")
 
         elif result is not None:
 
-            db.Database.update(user_id, user_location, country_code)
-            await context.send(f"Location set to {user_location} {country_code}!")
-
-    @commands.command(name='test', help='used for testing')
-    async def test(self, context):
-        user_id = context.author.id
-        print(user_id)
-        cursor = self.conn.cursor()
-        cursor.execute(
-            f"SELECT weather_loc FROM main WHERE user_id = {user_id}")
-        result = cursor.fetchone()
-        print(f'Result is:{result}')
-        if result is None:
-            await context.send(f'Prefered location not set, please set with "!set"')
-
-        elif result is not None:
-            db.Database.get_location(user_id)
+            db.Database.update(user_id, user_location, country_code, units)
+            await context.send(f"Location set to {user_location} {country_code} with {units}!")
 
 
 def setup(bot):
