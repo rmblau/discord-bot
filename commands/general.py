@@ -8,12 +8,19 @@ import sqlite3
 
 intents = discord.Intents.default()
 intents.members = True
+client = discord.Client()
 
 
 class general(commands.Cog, name="general"):
     def __init__(self, bot) -> None:
         self.bot = bot
         self.conn = db.Database.create_connection(environ['DB_NAME'])
+
+    @commands.command(name='onboard', help='Onboarding script')
+    async def onboard(self, context):
+
+        user = context.author
+        await user.send('Hello!')
 
     @commands.command(name='ping', help='Responds with pong')
     async def ping(self, context):
