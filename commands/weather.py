@@ -2,21 +2,18 @@ from discord import client
 import pprint as pp
 import discord
 from discord.ext import commands
-from discord.ext.commands import bot
-from utils import db
-import requests
+from utils.db import Database as db
 import pgeocode
 import aiohttp
+import logging
 from os import environ
-import sqlite3
 
 
 class weather(commands.Cog, name="weather"):
     def __init__(self, bot) -> None:
         self.bot = bot
-        self.client = discord.Client()
         self.weather_token = environ['WEATHER_API_KEY']
-        self.conn = db.Database.create_connection(environ['DB_NAME'])
+        self.conn = db.create_connection(environ['DB_NAME'])
 
     @commands.command(name='w', help='responds with weather at user location')
     async def weather(self, context, user_location=None, units='imperial', country_code='US'):
@@ -42,9 +39,9 @@ class weather(commands.Cog, name="weather"):
 
             elif result is not None:
                 print(result)
-                user_location = db.Database.get_location(user_id)[0]
-                units = db.Database.get_units(user_id)[0]
-                country_code = db.Database.get_country_code(user_id)[0]
+                user_location = db.get_location(user_id)[0]
+                units = db.get_units(user_id)[0]
+                country_code = db.get_country_code(user_id)[0]
                 await self.show_weather(context, user_location, units, country_code)
 
     async def show_weather(self, context, user_location, units='imperial', country_code='US'):
@@ -64,7 +61,7 @@ class weather(commands.Cog, name="weather"):
             async with session.get(url, headers=headers, params=params) as response:
                 if response.status == 200:
                     weather = await response.json()
-                    print(weather)
+                    logging.info(pp.pformat(weather))
                     current_conditions = weather['weather'][0]['description']
                     current_temp = weather['main']['temp']
                     feels_like = weather['main']['feels_like']

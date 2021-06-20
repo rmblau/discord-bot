@@ -2,14 +2,23 @@ import os
 import discord
 import logging
 from os import environ
+from discord import client
+
+from discord.ext.commands.bot import Bot
 from utils import db
 from discord.ext import commands
 import sqlite3
 
-TOKEN = environ['DISCORD_TOKEN']
-client = discord.Client()
-bot = commands.Bot(command_prefix='.')
 
+class MyBot(commands.Bot):
+    async def on_ready(self):
+        db.Database.create_connection('roran.db')
+        db.Database.create_table('roran.db')
+        print(f'{self.user.name} has connected to Discord!')
+
+
+client = MyBot(command_prefix='.')
+TOKEN = environ['DISCORD_TOKEN']
 if __name__ == "__main__":
     logger = logging.getLogger('discord')
     logger.setLevel(logging.INFO)
@@ -18,22 +27,14 @@ if __name__ == "__main__":
     handler.setFormatter(logging.Formatter(
         '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
-
     for file in os.listdir("./commands"):
         if file.endswith(".py"):
             extension = file[:-3]
             try:
-                bot.load_extension(f"commands.{extension}")
+                client.load_extension(f"commands.{extension}")
                 print(f"Loaded extension '{extension}'")
             except Exception as e:
                 exception = f"{type(e).__name__}: {e}"
                 print(f"Failed to load extension {extension}\n{exception}")
 
-
-@bot.event
-async def on_ready():
-    db.Database.create_connection('roran.db')
-    db.Database.create_table('roran.db')
-    print(f'{bot.user.name} has connected to Discord!')
-
-bot.run(TOKEN)
+client.run(TOKEN)

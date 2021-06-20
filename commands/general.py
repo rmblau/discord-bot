@@ -8,7 +8,6 @@ import sqlite3
 
 intents = discord.Intents.default()
 intents.members = True
-client = discord.Client()
 
 
 class general(commands.Cog, name="general"):
