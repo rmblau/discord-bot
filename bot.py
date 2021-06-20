@@ -18,7 +18,7 @@ class MyBot(commands.Bot):
         print(f'{self.user.name} has connected to Discord!')
 
 
-client = MyBot(command_prefix='~')
+client = MyBot(command_prefix='+')
 TOKEN = environ['DISCORD_TOKEN']
 
 if __name__ == "__main__":

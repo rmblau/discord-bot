@@ -140,3 +140,4 @@ cython_debug/
 #misc
 *.db
 *.bak
+*test*.py

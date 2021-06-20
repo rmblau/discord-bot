@@ -34,7 +34,7 @@ class weather(commands.Cog, name="weather"):
             await context.send(f"Location set to {user_location} {country_code} with {units}!")
 
     @commands.command(name='w', help='''responds with weather at user location
-    after setting a location one can call the weather with .w or with .w <postal code> for a different location''')
+    after setting a location one can call the weather with +w or with +w <postal code> for a different location''')
     async def weather(self, context, user_location=None, units='imperial', country_code='US'):
 
         if user_location is not None:
