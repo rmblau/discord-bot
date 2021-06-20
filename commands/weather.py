@@ -19,21 +19,18 @@ class weather(commands.Cog, name="weather"):
     units for temp(imperial by default) invoke with .set
     ''')
     async def set(self, context, user_location, country_code='US', units='imperial'):
+
         user_id = context.author.id
         cursor = self.conn.cursor()
         sql = f"SELECT user_id FROM main WHERE user_id = ?"
         values = (user_id,)
         cursor.execute(sql, values)
-
         result = cursor.fetchone()
         if result is None:
-
-            db.Database.insert(user_id, user_location, country_code, units)
+            db.insert(user_id, user_location, country_code, units)
             await context.send(f"Prefered location set to {user_location} {country_code} with {units}")
-
         elif result is not None:
-
-            db.Database.update(user_id, user_location, country_code, units)
+            db.update(user_id, user_location, country_code, units)
             await context.send(f"Location set to {user_location} {country_code} with {units}!")
 
     @commands.command(name='w', help='''responds with weather at user location
@@ -67,24 +64,39 @@ class weather(commands.Cog, name="weather"):
                 await self.show_weather(context, user_location, units, country_code)
 
     async def show_weather(self, context, user_location, units='imperial', country_code='US'):
-        nomi = pgeocode.Nominatim(country_code)
-        zipcode = nomi.query_postal_code(user_location)
-        lat = zipcode['latitude']
-        lon = zipcode['longitude']
-        url = "http://api.openweathermap.org/data/2.5/weather"
-        params = {
-            'lon': lon,
-            'lat': lat,
-            'units': units,
-            'appid': self.weather_token
-        }
-        headers = {}
+        if user_location.isnumeric():
+            nomi = pgeocode.Nominatim(country_code)
+            zipcode = nomi.query_postal_code(user_location)
+            lat = zipcode['latitude']
+            lon = zipcode['longitude']
+            url = "http://api.openweathermap.org/data/2.5/weather"
+            params = {
+                'lon': lon,
+                'lat': lat,
+                'units': units,
+                'appid': self.weather_token
+            }
+            headers = {}
+
+        else:
+            url = "http://api.openweathermap.org/data/2.5/weather"
+            params = {
+                'q': user_location,
+                'state code': country_code,
+                'units': units,
+                'appid': self.weather_token
+            }
+            headers = {}
+
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, params=params) as response:
                 if response.status == 200:
                     weather = await response.json()
+                    print(pp.pformat(weather))
                     logging.info(pp.pformat(weather))
                     current_conditions = weather['weather'][0]['description']
+                    name = weather['name']
+                    country = weather['sys']['country']
                     current_temp = weather['main']['temp']
                     feels_like = weather['main']['feels_like']
                     huminity = weather['main']['humidity']
@@ -109,7 +121,7 @@ class weather(commands.Cog, name="weather"):
                         embed.set_thumbnail(url=icon_url)
                     else:
                         embed = discord.Embed(
-                            title=f"Weather in {zipcode['county_name']}, {zipcode['state_name']}"
+                            title=f"Weather in {name}, {country}"
                         )
                         embed.add_field(
                             name='Current conditions', value=f'**{current_conditions}**', inline=False
