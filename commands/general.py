@@ -35,25 +35,6 @@ class general(commands.Cog, name="general"):
 
         await context.send(embed=embed)
 
-    @commands.command(name='set', help='set various variables')
-    async def set(self, context, user_location, country_code='US', units='imperial'):
-        user_id = context.author.id
-        cursor = self.conn.cursor()
-        sql = f"SELECT user_id FROM main WHERE user_id = ?"
-        values = (user_id,)
-        cursor.execute(sql, values)
-
-        result = cursor.fetchone()
-        if result is None:
-
-            db.Database.insert(user_id, user_location, country_code, units)
-            await context.send(f"Prefered location set to {user_location} {country_code} with {units}")
-
-        elif result is not None:
-
-            db.Database.update(user_id, user_location, country_code, units)
-            await context.send(f"Location set to {user_location} {country_code} with {units}!")
-
 
 def setup(bot):
     bot.add_cog(general(bot))

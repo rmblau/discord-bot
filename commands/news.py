@@ -14,7 +14,8 @@ class news(commands.Cog, name="news"):
         self.bot = bot
         self.news_token = environ['NEWS_API_KEY']
 
-    @commands.command(name='news', help='responds with news about a topic')
+    @commands.command(name='news', help='''responds with news about a topic
+    user .news topic to get an article''')
     async def news(self, context, topic):
 
         url = "https://free-news.p.rapidapi.com/v1/search"

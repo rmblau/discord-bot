@@ -17,7 +17,8 @@ class MyBot(commands.Bot):
         db.Database.create_table('roran.db')
         print(f'{self.user.name} has connected to Discord!')
 
-client = MyBot(command_prefix='.')
+
+client = MyBot(command_prefix='~')
 TOKEN = environ['DISCORD_TOKEN']
 
 if __name__ == "__main__":

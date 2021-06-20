@@ -15,7 +15,29 @@ class weather(commands.Cog, name="weather"):
         self.weather_token = environ['WEATHER_API_KEY']
         self.conn = db.create_connection(environ['DB_NAME'])
 
-    @commands.command(name='w', help='responds with weather at user location')
+    @commands.command(name='set', help='''set variables for weather: user_location, country_code(US by default), and 
+    units for temp(imperial by default) invoke with .set
+    ''')
+    async def set(self, context, user_location, country_code='US', units='imperial'):
+        user_id = context.author.id
+        cursor = self.conn.cursor()
+        sql = f"SELECT user_id FROM main WHERE user_id = ?"
+        values = (user_id,)
+        cursor.execute(sql, values)
+
+        result = cursor.fetchone()
+        if result is None:
+
+            db.Database.insert(user_id, user_location, country_code, units)
+            await context.send(f"Prefered location set to {user_location} {country_code} with {units}")
+
+        elif result is not None:
+
+            db.Database.update(user_id, user_location, country_code, units)
+            await context.send(f"Location set to {user_location} {country_code} with {units}!")
+
+    @commands.command(name='w', help='''responds with weather at user location
+    after setting a location one can call the weather with .w or with .w <postal code> for a different location''')
     async def weather(self, context, user_location=None, units='imperial', country_code='US'):
 
         if user_location is not None:
