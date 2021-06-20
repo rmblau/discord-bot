@@ -11,11 +11,11 @@ import sqlite3
 
 
 class MyBot(commands.Bot):
+
     async def on_ready(self):
         db.Database.create_connection('roran.db')
         db.Database.create_table('roran.db')
         print(f'{self.user.name} has connected to Discord!')
-
 
 client = MyBot(command_prefix='.')
 TOKEN = environ['DISCORD_TOKEN']
