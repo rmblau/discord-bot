@@ -19,6 +19,7 @@ class MyBot(commands.Bot):
 
 client = MyBot(command_prefix='.')
 TOKEN = environ['DISCORD_TOKEN']
+
 if __name__ == "__main__":
     logger = logging.getLogger('discord')
     logger.setLevel(logging.INFO)
@@ -27,6 +28,7 @@ if __name__ == "__main__":
     handler.setFormatter(logging.Formatter(
         '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
+
     for file in os.listdir("./commands"):
         if file.endswith(".py"):
             extension = file[:-3]
