@@ -105,7 +105,7 @@ class weather(commands.Cog, name="weather"):
                             name='Humidity', value=f'**{huminity} %**', inline=False
                         )
                         embed.set_thumbnail(url=icon_url)
-                    await context.send(embed=embed)
+                    await context.reply(embed=embed, mention_author=True)
 
 
 def setup(bot):

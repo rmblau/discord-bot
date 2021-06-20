@@ -36,5 +36,4 @@ async def on_ready():
     db.Database.create_table('roran.db')
     print(f'{bot.user.name} has connected to Discord!')
 
-
 bot.run(TOKEN)
