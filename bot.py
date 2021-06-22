@@ -29,7 +29,6 @@ if __name__ == "__main__":
     handler.setFormatter(logging.Formatter(
         '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
-
     for file in os.listdir("./commands"):
         if file.endswith(".py"):
             extension = file[:-3]

@@ -16,13 +16,12 @@ class stocks(commands.Cog, name="stocks"):
         self.token = environ['STOCK_API_KEY']
 
     @commands.command(name='stocks', help='Use +stocks and the name of the company, i.e, +stocks GME.')
-    async def news(self, context, symbol):
+    async def stocks(self, context, symbol):
         # replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
         url = 'https://www.alphavantage.co/query'
         params = {
             f"function": "GLOBAL_QUOTE",
-            f"symbol": symbol,  # remove later
-            # f'interval': '5min',
+            f"symbol": symbol,
             f'apikey': self.token
         }
         async with aiohttp.ClientSession() as session:

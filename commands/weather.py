@@ -54,7 +54,7 @@ class weather(commands.Cog, name="weather"):
             print(f'Result is:{result}')
             if result is None:
                 print(result)
-                await context.send(f'Prefered location not set, please set with "!set"')
+                await context.send(f'Prefered location not set, please set with "+set"')
 
             elif result is not None:
                 print(result)
@@ -76,9 +76,8 @@ class weather(commands.Cog, name="weather"):
                 'units': units,
                 'appid': self.weather_token
             }
-            headers = {}
 
-        else:
+        elif country_code != 'US':
             url = "http://api.openweathermap.org/data/2.5/weather"
             params = {
                 'q': user_location,
@@ -86,7 +85,15 @@ class weather(commands.Cog, name="weather"):
                 'units': units,
                 'appid': self.weather_token
             }
-            headers = {}
+        # else:
+        #    url = "http://api.openweathermap.org/data/2.5/weather"
+        #    params = {
+        #        'q': user_location,
+        #        'state code': country_code,
+        #        'units': units,
+        #        'appid': self.weather_token
+        #    }
+        headers = {}
 
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, params=params) as response:
