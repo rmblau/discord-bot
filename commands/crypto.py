@@ -1,4 +1,5 @@
 import pprint as pp
+import re
 import discord
 from discord.ext import commands
 from discord.ext.commands import bot
@@ -16,9 +17,15 @@ class crypto(commands.Cog, name="crypto"):
         self.bot = bot
         self.token = environ['CRYPTO_KEY']
 
+    async def get_icon(symbol):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url=f'https://cryptoicons.org/api/icon/{symbol}/200') as response:
+                if response.status == 200:
+                    return await response
+
     @commands.command(name='c', help='Use +c and the name of the company, i.e, +c BTC.')
     async def crypto(self, context, symbol):
-        print(symbol)
+        icon = f'https://icons.bitbot.tools/api/{symbol}/128x128'
         # replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
         url = "https://api.nomics.com/v1/currencies/ticker"
         params = {
@@ -69,6 +76,8 @@ class crypto(commands.Cog, name="crypto"):
 
                     embed.add_field(
                         name='market cap change percent', value=f"**{market_cap_change_percent}**")
+
+                    embed.set_thumbnail(url=icon)
                     await context.reply(embed=embed)
 
 

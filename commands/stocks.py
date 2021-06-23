@@ -7,6 +7,7 @@ import logging
 from datetime import datetime
 import aiohttp
 import asyncio
+import babel.numbers
 from os import environ, name
 
 
@@ -29,14 +30,21 @@ class stocks(commands.Cog, name="stocks"):
                 if response.status == 200:
                     stonks = await response.json()
                     symbol = stonks["Global Quote"]["01. symbol"]
-                    open = stonks["Global Quote"]["02. open"]
-                    high = stonks["Global Quote"]["03. high"]
-                    low = stonks["Global Quote"]["04. low"]
-                    price = stonks["Global Quote"]["05. price"]
-                    volume = stonks['Global Quote']["06. volume"]
+                    open = babel.numbers.format_currency(
+                        stonks["Global Quote"]["02. open"], "USD", locale="en_US")
+                    high = babel.numbers.format_currency(
+                        stonks["Global Quote"]["03. high"], "USD", locale="en_US")
+                    low = babel.numbers.format_currency(
+                        stonks["Global Quote"]["04. low"], "USD", locale="en_US")
+                    price = babel.numbers.format_currency(
+                        stonks["Global Quote"]["05. price"], "USD", locale="en_US")
+                    volume = babel.numbers.format_currency(
+                        stonks['Global Quote']["06. volume"], "USD", locale="en_US")
                     last_day = stonks["Global Quote"]["07. latest trading day"]
-                    previous_close = stonks["Global Quote"]["08. previous close"]
-                    change = stonks["Global Quote"]["09. change"]
+                    previous_close = babel.numbers.format_currency(
+                        stonks["Global Quote"]["08. previous close"], "USD", locale="en_US")
+                    change = babel.numbers.format_currency(
+                        stonks["Global Quote"]["09. change"], "USD", locale="en_US")
                     change_percent = stonks["Global Quote"]["10. change percent"]
                     embed = discord.Embed(
                     )

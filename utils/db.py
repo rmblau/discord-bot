@@ -1,11 +1,10 @@
-from os import environ
-from os.path import isfile
-from sqlite3 import connect
-import sqlite3
-import logging
-from sqlite3.dbapi2 import Error
-
 from discord import user
+from sqlite3.dbapi2 import Error
+import logging
+import sqlite3
+from sqlite3 import connect
+from os.path import isfile
+from os import environ
 
 
 class Database():
@@ -33,6 +32,9 @@ class Database():
                 country_code TEXT
                 )
                 ''')
+
+
+class Weather():
 
     def insert(user_id, user_location, country_code, units):
 

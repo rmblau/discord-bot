@@ -3,6 +3,7 @@ import pprint as pp
 import discord
 from discord.ext import commands
 from utils.db import Database as db
+from utils.db import Weather as w
 import pgeocode
 import aiohttp
 import logging
@@ -27,11 +28,13 @@ class weather(commands.Cog, name="weather"):
         cursor.execute(sql, values)
         result = cursor.fetchone()
         if result is None:
-            db.insert(user_id, user_location, country_code, units)
-            await context.send(f"Prefered location set to {user_location} {country_code} with {units}")
+            w.insert(user_id, user_location, country_code, units)
+            context.send(
+                f"Prefered location set to {user_location} {country_code} with {units}")
         elif result is not None:
-            db.update(user_id, user_location, country_code, units)
-            await context.send(f"Location set to {user_location} {country_code} with {units}!")
+            w.update(user_id, user_location, country_code, units)
+            context.send(
+                f"Location set to {user_location} {country_code} with {units}!")
 
     @commands.command(name='w', help='''responds with weather at user location
     after setting a location one can call the weather with +w or with +w <postal code> for a different location''')
@@ -58,9 +61,9 @@ class weather(commands.Cog, name="weather"):
 
             elif result is not None:
                 print(result)
-                user_location = db.get_location(user_id)[0]
-                units = db.get_units(user_id)[0]
-                country_code = db.get_country_code(user_id)[0]
+                user_location = w.get_location(user_id)[0]
+                units = w.get_units(user_id)[0]
+                country_code = w.get_country_code(user_id)[0]
                 await self.show_weather(context, user_location, units, country_code)
 
     async def show_weather(self, context, user_location, units='imperial', country_code='US'):
