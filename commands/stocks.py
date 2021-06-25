@@ -47,38 +47,47 @@ class stocks(commands.Cog, name="stocks"):
                         stonks["Global Quote"]["09. change"], "USD", locale="en_US")
                     change_percent = stonks["Global Quote"]["10. change percent"]
                     embed = discord.Embed(
+                        color=discord.Color.green()
                     )
 
                     embed.add_field(
-                        name='symbol',  value=f"**{symbol}**"
+                        name='symbol',  value=f"**{symbol}**", inline=False
+                    )
+                    embed.add_field(
+                        name='price', value=f"**{price}**", inline=True
                     )
 
                     embed.add_field(
-                        name='open', value=f"**{open}**")
+                        name='open', value=f"**{open}**", inline=True
+                    )
 
                     embed.add_field(
-                        name='high', value=f"**{high}**")
+                        name='high', value=f"**{high}**", inline=True
+                    )
 
                     embed.add_field(
-                        name='low', value=f"**{low}**")
+                        name='low', value=f"**{low}**", inline=True
+                    )
 
                     embed.add_field(
-                        name='price', value=f"**{price}**")
+                        name='volume', value=f"**{volume}**", inline=True
+                    )
 
                     embed.add_field(
-                        name='volume', value=f"**{volume}**")
+                        name='latest trading day', value=f"**{last_day}**", inline=True
+                    )
 
                     embed.add_field(
-                        name='latest trading day', value=f"**{last_day}**")
+                        name='previous close', value=f"**{previous_close}**", inline=True
+                    )
 
                     embed.add_field(
-                        name='previous close', value=f"**{previous_close}**")
+                        name='change', value=f"**{change}**", inline=True
+                    )
 
                     embed.add_field(
-                        name='change', value=f"**{change}**")
-
-                    embed.add_field(
-                        name='change percent', value=f"**{change_percent}**")
+                        name='change percent', value=f"**{change_percent}**", inline=True
+                    )
 
                     await context.reply(embed=embed)
                 else:

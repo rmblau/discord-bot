@@ -56,10 +56,11 @@ class crypto(commands.Cog, name="crypto"):
                         data["1d"]["market_cap_change_pct"], format="##.####", locale="en_US")
 
                     embed = discord.Embed(
+                        color=discord.Color.gold()
                     )
 
                     embed.add_field(
-                        name='symbol',  value=f"**{symbol}**"
+                        name='symbol',  value=f"**{symbol}**", inline=False
                     )
 
                     embed.add_field(
