@@ -6,7 +6,6 @@ from discord.ext.commands import bot
 import requests
 import logging
 import babel.numbers
-from datetime import datetime
 import aiohttp
 import asyncio
 from os import environ, name
@@ -23,7 +22,7 @@ class crypto(commands.Cog, name="crypto"):
                 if response.status == 200:
                     return await response
 
-    @commands.command(name='c', help='Use +c and the name of the company, i.e, +c BTC.')
+    @commands.command(name='c', aliases=['crypto'], help='Use +c and the name of the company, i.e, +c BTC.')
     async def crypto(self, context, symbol):
         icon = f'https://icons.bitbot.tools/api/{symbol}/128x128'
         # replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
