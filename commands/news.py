@@ -1,8 +1,6 @@
 import pprint as pp
 import discord
 from discord.ext import commands
-from discord.ext.commands import bot
-import requests
 import logging
 import aiohttp
 import asyncio

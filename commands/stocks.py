@@ -16,7 +16,7 @@ class stocks(commands.Cog, name="stocks"):
         self.bot = bot
         self.token = environ['STOCK_API_KEY']
 
-    @commands.command(name='stocks', help='Use +stocks and the name of the company, i.e, +stocks GME.')
+    @commands.command(name='stocks', aliases=['s'], help='Use +stocks and the name of the company, i.e, +stocks GME.')
     async def stocks(self, context, symbol):
         # replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
         url = 'https://www.alphavantage.co/query'

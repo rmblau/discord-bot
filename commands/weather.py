@@ -1,17 +1,13 @@
-from threading import Condition
-from attr import validate
-import babel
-from babel.numbers import format_percent
-from discord import client
 import pprint as pp
+import babel
 import discord
 from discord.ext import commands
-import requests
 from datetime import datetime
 from utils.db import Database as db
 from utils.db import Weather as w
 from babel.units import format_unit
 import pgeocode
+from geopy.geocoders import Nominatim
 import aiohttp
 import logging
 import pandas as pd
@@ -46,12 +42,12 @@ class weather(commands.Cog, name="weather"):
 
     @commands.command(name='w', help='''responds with weather at user location
     after setting a location one can call the weather with +w or with +w <postal code> for a different location''')
-    async def weather(self, context, user_location=None, units='imperial', country_code='US'):
+    async def weather(self, context, user_location=None, country_code='US', units='imperial',):
 
         if user_location is not None:
             try:
 
-                await self.show_weather(context, user_location, units, country_code)
+                await self.show_weather(context, user_location, country_code, units)
 
             except KeyError:
 
@@ -74,15 +70,16 @@ class weather(commands.Cog, name="weather"):
                 user_location = w.get_location(user_id)[0]
                 units = w.get_units(user_id)[0]
                 country_code = w.get_country_code(user_id)[0]
-                await self.show_weather(context, user_location, units, country_code)
+                await self.show_weather(context, user_location, country_code, units)
 
-    async def show_weather(self, context, user_location, units='imperial', country_code='US'):
+    async def show_weather(self, context, user_location, country_code='US', units='imperial'):
+        url = "http://api.openweathermap.org/data/2.5/weather"
         if user_location.isnumeric():
             nomi = pgeocode.Nominatim(country_code)
             zipcode = nomi.query_postal_code(user_location)
             lat = zipcode['latitude']
             lon = zipcode['longitude']
-            url = "http://api.openweathermap.org/data/2.5/weather"
+
             params = {
                 'lon': lon,
                 'lat': lat,
@@ -91,61 +88,51 @@ class weather(commands.Cog, name="weather"):
             }
 
         elif country_code != 'US':
-            url = "http://api.openweathermap.org/data/2.5/weather"
+
             params = {
                 'q': user_location,
                 'state code': country_code,
                 'units': units,
                 'appid': self.weather_token
             }
-        # else:
-        #    url = "http://api.openweathermap.org/data/2.5/weather"
-        #    params = {
-        #        'q': user_location,
-        #        'state code': country_code,
-        #        'units': units,
-        #        'appid': self.weather_token
-        #    }
-        headers = {}
-
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers, params=params) as response:
+            async with session.get(url, params=params) as response:
                 if response.status == 200:
                     weather = await response.json()
-                    print(pp.pformat(weather))
+                    color = discord.Color.blue()
                     logging.info(pp.pformat(weather))
+                    huminity = weather['main']['humidity']
+                    high = weather['main']['temp_max']
+                    low = weather['main']['temp_min']
+                    current_temp = weather['main']['temp']
+                    feels_like = weather['main']['feels_like']
                     current_conditions = weather['weather'][0]['description']
                     name = weather['name']
                     country = weather['sys']['country']
                     if units == 'metric':
-                        current_temp = format_celcius(weather['main']['temp'])
+                        current_temp = format_celcius(current_temp)
+                        feels_like = format_celcius(
+                            feels_like)
+                        high = format_celcius(high)
+                        low = format_celcius(low)
                     else:
                         current_temp = format_fahrenheit(
-                            weather['main']['temp'])
-                    if units == 'metric':
-                        feels_like = format_celcius(
-                            weather['main']['feels_like'])
-                    else:
+                            current_temp)
                         feels_like = format_fahrenheit(
-                            weather['main']['feels_like'])
-
-                    huminity = weather['main']['humidity']
-                    high = weather['main']['temp_max']
-                    if units == 'metric':
-
-                        low = format_celcius(weather['main']['temp_min'])
-                    else:
-                        low = format_fahrenheit(weather['main']['temp_min'])
+                            feels_like)
+                        high = format_fahrenheit(high)
+                        low = format_fahrenheit(low)
                     weather_icon = weather['weather'][0]['icon']
                     icon_url = f'http://openweathermap.org/img/wn/{weather_icon}@2x.png'
                     if country_code == 'US':
                         embed = discord.Embed(
                             title=f"Weather in {zipcode['place_name']}, {zipcode['state_name']}",
-                            color=discord.Color.blue()
+                            color=color
                         )
                     else:
                         embed = discord.Embed(
-                            title=f"Weather in {name}, {country}"
+                            title=f"Weather in {name}, {country}",
+                            color=color
                         )
                     embed.add_field(
                         name='Current conditions', value=f'**{current_conditions}**', inline=False
@@ -167,14 +154,14 @@ class weather(commands.Cog, name="weather"):
                     await context.reply(embed=embed, mention_author=True)
 
  #####THIS IS WEATHER FORCAST###############################
-    @commands.command(name='wf', help='''responds with weather at user location
-    after setting a location one can call the weather with +w or with +w <postal code> for a different location''')
-    async def forcast(self, context, user_location=None, units='imperial', country_code='US'):
+    @commands.command(name='wf', help='''responds with a 7 day forecast at user location
+    after setting a location. can be called with +wf or +wf <user_location> for a different location''')
+    async def forecast(self, context, user_location=None, country_code='US', units='imperial',):
 
         if user_location is not None:
             try:
 
-                await self.show_forcast(context, user_location, units, country_code)
+                await self.show_forecast(context, user_location, country_code, units)
 
             except KeyError:
 
@@ -197,22 +184,28 @@ class weather(commands.Cog, name="weather"):
                 user_location = w.get_location(user_id)[0]
                 units = w.get_units(user_id)[0]
                 country_code = w.get_country_code(user_id)[0]
-                await self.show_forcast(context, user_location, units, country_code)
+                await self.show_forecast(context, user_location, country_code, units)
 
-    async def show_forcast(self, context, user_location, units='imperial', country_code='US'):
+    async def show_forecast(self, context, user_location, country_code='US', units='imperial'):
 
         if user_location.isnumeric():
             nomi = pgeocode.Nominatim(country_code)
             zipcode = nomi.query_postal_code(user_location)
             lat = zipcode['latitude']
             lon = zipcode['longitude']
-            url = "https://api.openweathermap.org/data/2.5/onecall"
-            params = {
-                'lon': lon,
-                'lat': lat,
-                'units': units,
-                'appid': self.weather_token
-            }
+        else:
+            geo = Nominatim(user_agent='Roran')
+            location = geo.geocode(f'{user_location},{country_code}')
+            lat = location.latitude
+            lon = location.longitude
+            print(location)
+        url = "https://api.openweathermap.org/data/2.5/onecall"
+        params = {
+            'lon': lon,
+            'lat': lat,
+            'units': units,
+            'appid': self.weather_token
+        }
 
         async with aiohttp.ClientSession() as session:
             async with session.get(url, params=params) as response:
@@ -232,29 +225,49 @@ class weather(commands.Cog, name="weather"):
 
                     }
                     for day in weather_forcast:
-                        feels_like = weather['current']['feels_like']
+
                         conditions = day['weather'][0]['description']
+                        if units == 'metric':
+                            temp = format_celcius(day['temp']['day'])
+                            low = format_celcius(day['temp']['min'])
+                            high = format_celcius(day['temp']['max'])
+                            night = format_celcius(day['temp']['night'])
+                            feels_like = format_celcius(
+                                weather['current']['feels_like'])
+                        else:
+                            temp = format_fahrenheit(day['temp']['day'])
+                            low = format_fahrenheit(day['temp']['min'])
+                            high = format_fahrenheit(day['temp']['max'])
+                            night = format_fahrenheit(day['temp']['night'])
+                            feels_like = format_fahrenheit(
+                                weather['current']['feels_like'])
+                        weather_dict['temp'].append(temp)
+                        weather_dict['min'].append(low)
+                        weather_dict['max'].append(high)
+                        weather_dict['night'].append(night)
+                        weather_dict['feels_like'].append(feels_like)
+
                         weather_dict['dt'].append(
                             datetime.fromtimestamp(day['dt']).strftime('%A'))
-                        weather_dict['temp'].append(day['temp']['day'])
-                        weather_dict['min'].append(day['temp']['min'])
-                        weather_dict['max'].append(day['temp']['max'])
-                        weather_dict['night'].append(day['temp']['night'])
-                        weather_dict['feels_like'].append(feels_like)
+
                         weather_dict['conditions'].append(conditions)
                         weather_df = pd.DataFrame.from_dict(weather_dict)
                         print(weather_df)
-                    embed = discord.Embed(title=f"Forecast for {zipcode['place_name']}, {zipcode['state_name']}",
-                                          color=discord.Color.blue())
+                        if country_code == 'US':
+                            embed = discord.Embed(title=f"Forecast for {zipcode['place_name']}, {zipcode['state_name']}",
+                                                  color=discord.Color.blue())
+                        elif country_code != 'US':
+                            embed = discord.Embed(title=f"Forecast for {user_location}, {country_code}",
+                                                  color=discord.Color.blue())
                     embed.add_field(
-                        name=f'{weather_dict["dt"][0]}', value=f'**{weather_dict["max"][0]} / {weather_dict["min"][0]}\n {weather_dict["conditions"][0]}**')
+                        name=f'Today', value=f'**{weather_dict["max"][0]}/{weather_dict["min"][0]}\n {weather_dict["conditions"][0]}**')
 
                     embed.add_field(
-                        name=f'{weather_dict["dt"][1]}', value=f'**{weather_dict["max"][1]}  / {weather_dict["min"][1]}\n {weather_dict["conditions"][1]}**')
+                        name=f'Tomorrow', value=f'**{weather_dict["max"][1]}/{weather_dict["min"][1]}\n {weather_dict["conditions"][1]}**')
                     embed.add_field(
-                        name=f'{weather_dict["dt"][2]}', value=f'**{weather_dict["max"][2]} / {weather_dict["min"][2]} \n{weather_dict["conditions"][2]}**')
+                        name=f'{weather_dict["dt"][2]}', value=f'**{weather_dict["max"][2]}/{weather_dict["min"][2]} \n{weather_dict["conditions"][2]}**')
                     embed.add_field(
-                        name=f'{weather_dict["dt"][3]}', value=f'**{weather_dict["max"][3]} / {weather_dict["min"][3]} \n{weather_dict["conditions"][3]}**')
+                        name=f'{weather_dict["dt"][3]}', value=f'**{weather_dict["max"][3]}/{weather_dict["min"][3]} \n{weather_dict["conditions"][3]}**')
                     embed.add_field(
                         name=f'{weather_dict["dt"][4]}', value=f'** {weather_dict["max"][4]}/{weather_dict["min"][4]} \n{weather_dict["conditions"][4]}**')
                     embed.add_field(
