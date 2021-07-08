@@ -14,6 +14,8 @@ intents.members = True
 
 
 class Help(commands.MinimalHelpCommand):
+
+    @commands.cooldown(1, 5, commands.BucketType.user)
     async def send_command_help(self, command):
         embed = discord.Embed(title=self.get_command_signature(command))
         embed.add_field(name="Help", value=command.help)
