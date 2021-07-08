@@ -12,13 +12,14 @@ class news(commands.Cog, name="news"):
         self.bot = bot
         self.news_token = environ['NEWS_API_KEY']
 
+    @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.command(name='news', help='''responds with news about a topic
     user .news topic to get an article''')
     async def news(self, context, topic):
 
         url = "https://free-news.p.rapidapi.com/v1/search"
 
-        querystring = {"q": f"{topic}", "lang": "en",
+        params = {"q": f"{topic}", "lang": "en",
                        "page_size": 1}
 
         headers = {
@@ -26,7 +27,7 @@ class news(commands.Cog, name="news"):
             'x-rapidapi-host': "free-news.p.rapidapi.com"
         }
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers, params=querystring) as response:
+            async with session.get(url, headers=headers, params=params) as response:
                 if response.status == 200:
                     print(response)
                     the_news = await response.json()

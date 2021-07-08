@@ -2,7 +2,7 @@ import pprint as pp
 import re
 import discord
 from discord.ext import commands
-from discord.ext.commands import bot
+from discord.ext.commands import bot, group
 import requests
 import logging
 import babel.numbers
@@ -22,6 +22,7 @@ class crypto(commands.Cog, name="crypto"):
                 if response.status == 200:
                     return await response
 
+    @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.command(name='c', aliases=['crypto'], help='Use +c and the name of the company, i.e, +c BTC.')
     async def crypto(self, context, symbol):
         icon = f'https://icons.bitbot.tools/api/{symbol}/128x128'

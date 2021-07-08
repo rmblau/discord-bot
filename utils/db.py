@@ -9,8 +9,6 @@ from os import environ
 
 class Database():
 
-    logging.basicConfig(filename='database.log', level=logging.INFO)
-
     def create_connection(db_file):
         conn = None
         try:

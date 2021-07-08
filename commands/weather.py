@@ -20,6 +20,7 @@ class weather(commands.Cog, name="weather"):
         self.weather_token = environ['WEATHER_API_KEY']
         self.conn = db.create_connection(environ['DB_NAME'])
 
+    @commands.cooldown(1, 3, commands.BucketType.user)
     @commands.command(name='set', help='''set variables for weather: user_location, country_code(US by default), and
     units for temp(imperial by default) invoke with .set
     ''')
@@ -40,6 +41,7 @@ class weather(commands.Cog, name="weather"):
             await context.send(
                 f"Location set to {user_location} {country_code} with {units}!")
 
+    @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.command(name='w', help='''responds with weather at user location
     after setting a location one can call the weather with +w or with +w <postal code> for a different location''')
     async def weather(self, context, user_location=None, country_code='US', units='imperial',):
@@ -154,6 +156,7 @@ class weather(commands.Cog, name="weather"):
                     await context.reply(embed=embed, mention_author=True)
 
  #####THIS IS WEATHER FORCAST###############################
+    @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.command(name='wf', help='''responds with a 7 day forecast at user location
     after setting a location. can be called with +wf or +wf <user_location> for a different location''')
     async def forecast(self, context, user_location=None, country_code='US', units='imperial',):
