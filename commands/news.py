@@ -15,7 +15,7 @@ class news(commands.Cog, name="news"):
     @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.command(name='news', help='''responds with news about a topic
     user .news topic to get an article''')
-    async def news(self, context, topic):
+    async def news(self, context, *, topic):
 
         url = "https://free-news.p.rapidapi.com/v1/search"
 
