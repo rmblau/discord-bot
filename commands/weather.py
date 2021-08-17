@@ -3,6 +3,8 @@ import babel
 import discord
 from discord.ext import commands
 from datetime import datetime
+
+from sqlalchemy.sql.elements import Null
 from utils.db import Database as db
 from utils.db import Weather as w
 from babel.units import format_unit
@@ -11,6 +13,10 @@ from geopy.geocoders import Nominatim
 import aiohttp
 import logging
 import pandas as pd
+from utils.User import User
+from utils.base import Session, engine, Base
+import sqlalchemy.orm.session as session
+from sqlalchemy import select
 from os import environ
 
 
@@ -18,23 +24,20 @@ class weather(commands.Cog, name="weather"):
     def __init__(self, bot) -> None:
         self.bot = bot
         self.weather_token = environ['WEATHER_API_KEY']
-        self.conn = db.create_connection(environ['DB_NAME'])
 
     @commands.cooldown(1, 3, commands.BucketType.user)
     @commands.command(name='set', help='''set variables for weather: user_location, country_code(US by default), and
     units for temp(imperial by default) invoke with .set
     ''')
     async def set(self, context, user_location, country_code='US', units='imperial'):
-
+        session = Session()
         user_id = context.author.id
-        cursor = self.conn.cursor()
-        sql = f"SELECT user_id FROM main WHERE user_id = ?"
-        values = (user_id,)
-        cursor.execute(sql, values)
-        result = cursor.fetchone()
+        with session as session:
+            result = session.query(User.weather_location).where(
+                User.id == user_id).first()
         if result is None:
             w.insert(user_id, user_location, country_code, units)
-            context.send(
+            await context.send(
                 f"Prefered location set to {user_location} {country_code} with {units}")
         elif result is not None:
             w.update(user_id, user_location, country_code, units)
@@ -47,21 +50,25 @@ class weather(commands.Cog, name="weather"):
     async def weather(self, context, user_location=None, country_code='US', units='imperial',):
 
         if user_location is not None:
-            try:
 
+            try:
+                session = db.create_session(engine)
+                with session as session:
+                    stuff = session.query(User)
+                    for people in stuff:
+                        print(people.weather_location)
                 await self.show_weather(context, user_location, country_code, units)
 
             except KeyError:
 
                 await context.send(f'Location not set')
         else:
-
             user_id = context.author.id
-            cursor = self.conn.cursor()
-            sql = f"SELECT weather_loc FROM main WHERE user_id = ?"
-            values = (user_id,)
-            cursor.execute(sql, values)
-            result = cursor.fetchone()
+            session = db.create_session(engine)
+            with session as session:
+                result = session.query(User.weather_location).where(
+                    User.id == user_id).one()
+                session.commit()
             print(f'Result is:{result}')
 
             if result is None:
@@ -170,14 +177,12 @@ class weather(commands.Cog, name="weather"):
 
                 await context.send(f'Location not set')
         else:
-
             user_id = context.author.id
-            cursor = self.conn.cursor()
-            sql = f"SELECT weather_loc FROM main WHERE user_id = ?"
-            values = (user_id,)
-            cursor.execute(sql, values)
-            result = cursor.fetchone()
-            print(f'Result is:{result}')
+            session = db.create_session(engine)
+            with session as session:
+                result = session.query(User.weather_location).where(
+                    User.id == user_id).one()
+                session.commit()
 
             if result is None:
 

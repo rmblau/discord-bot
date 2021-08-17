@@ -13,8 +13,6 @@ import sqlite3
 class MyBot(commands.Bot):
 
     async def on_ready(self):
-        db.Database.create_connection('roran.db')
-        db.Database.create_table('roran.db')
         print(f'{self.user.name} has connected to Discord!')
 
 
@@ -22,10 +20,11 @@ client = MyBot(command_prefix='+')
 TOKEN = environ['DISCORD_TOKEN']
 
 if __name__ == "__main__":
+    db.Database.create_table(db.Database)
     logger = logging.getLogger('discord')
     logger.setLevel(logging.INFO)
     handler = logging.FileHandler(
-        filename='./discord.log', encoding='utf-8', mode='w')
+        filename='./logs/discord.log', encoding='utf-8', mode='w')
     handler.setFormatter(logging.Formatter(
         '%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)

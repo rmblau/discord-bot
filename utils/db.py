@@ -1,3 +1,7 @@
+from re import U
+import sqlalchemy
+from sqlalchemy.orm import session
+from sqlalchemy.orm.session import sessionmaker
 from discord import user
 from sqlite3.dbapi2 import Error
 import logging
@@ -5,93 +9,63 @@ import sqlite3
 from sqlite3 import connect
 from os.path import isfile
 from os import environ
+from sqlalchemy import Table, Column, Integer, String, MetaData, create_engine
+from sqlalchemy import select, update
+from utils.User import User
+from utils.base import Session, engine, Base
 
 
 class Database():
 
-    def create_connection(db_file):
-        conn = None
-        try:
-            conn = sqlite3.connect(db_file)
+    def create_session(engine):
+        session = Session()
+        return session
 
-        except Error as e:
-            logging.info(e)
+    def create_table(self):
 
-        return conn
-
-    def create_table(db_file):
-        db = sqlite3.connect(db_file)
-        cursor = db.cursor()
-        cursor.execute(
-            ''' CREATE TABLE IF NOT EXISTS main(
-                user_id TEXT,
-                weather_loc TEXT,
-                units TEXT,
-                country_code TEXT
-                )
-                ''')
+        Base.metadata.create_all(engine)
 
 
 class Weather():
 
-    def insert(user_id, user_location, country_code, units):
-
-        db = sqlite3.connect(environ['DB_NAME'])
-        cursor = db.cursor()
-        sql = f"INSERT INTO main(user_id, weather_loc, units,country_code) VALUES(?,?,?,?)"
-        values = (user_id, user_location, units, country_code)
-        cursor.execute(sql, values)
-        db.commit()
-        db.close()
+    def insert(user_id, user_location, units, country_code):
+        session = Database.create_session(engine)
+        with session as session:
+            user = User(user_id, user_location, units, country_code)
+            session.add(user)
+            session.commit()
+        return user
 
     def update(user_id, user_location, country_code='US', units='imperial'):
-        db = sqlite3.connect(environ['DB_NAME'])
-        cursor = db.cursor()
-        sql = (
-            f'UPDATE main SET weather_loc = ?, country_code = ?, units = ? where user_id = ? ')
-        values = (user_location, country_code, units, user_id)
-        cursor.execute(sql, values)
-        db.commit()
-        db.close()
+        session = Database.create_session(engine)
+        with session as session:
+            user = session.query(User).filter(User.id == user_id).update({
+                User.weather_location: user_location,
+                User.country_code: country_code,
+                User.units: units})
+            session.commit()
 
     def get_location(user_id):
-
-        db = sqlite3.connect(environ['DB_NAME'])
-        cursor = db.cursor()
-        sql = (
-            f'SELECT weather_loc FROM main where user_id = ?'
-        )
-        values = (user_id,)
-        cursor.execute(sql, values)
-        result = cursor.fetchone()
-        db.commit()
-        print(result)
-        return result
+        session = Database.create_session(engine)
+        with session as session:
+            user = session.query(User.weather_location).filter(
+                User.id == user_id).first()
+            session.commit()
+        return user
 
     def get_country_code(user_id):
 
-        db = sqlite3.connect(environ['DB_NAME'])
-        cursor = db.cursor()
-        sql = (
-            f'SELECT country_code FROM main where user_id = ?'
-        )
-        values = (user_id,)
-        cursor.execute(sql, values)
-        result = cursor.fetchone()
-        db.commit()
-        print(result)
-        return result
+        session = Database.create_session(engine)
+        with session as session:
+            user = session.query(User.country_code).filter(
+                User.id == user_id).first()
+            session.commit()
+        return user
 
     def get_units(user_id):
-
-        db = sqlite3.connect(environ['DB_NAME'])
-        cursor = db.cursor()
-        sql = (
-            f'SELECT units FROM main where user_id = ?'
-        )
-        values = (user_id,)
-        cursor.execute(sql, values)
-        result = cursor.fetchone()
-        db.commit()
-        print(result)
-        return result
+        session = Database.create_session(engine)
+        with session as session:
+            user = session.query(User.units).filter(
+                User.id == user_id).first()
+            session.commit()
+        return user

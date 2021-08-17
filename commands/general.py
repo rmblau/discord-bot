@@ -11,7 +11,6 @@ intents.members = True
 class general(commands.Cog, name="general"):
     def __init__(self, bot) -> None:
         self.bot = bot
-        self.conn = db.Database.create_connection(environ['DB_NAME'])
 
     @commands.command(name='onboard', help='Onboarding script')
     async def onboard(self, context):
