@@ -27,7 +27,7 @@ class weather(commands.Cog, name="weather"):
 
     @commands.cooldown(1, 3, commands.BucketType.user)
     @commands.command(name='set', help='''set variables for weather: user_location, country_code(US by default), and
-    units for temp(imperial by default) invoke with .set
+    units for temp(imperial by default) invoke with +set
     ''')
     async def set(self, context, user_location, country_code='US', units='imperial'):
         session = Session()
@@ -254,12 +254,10 @@ class weather(commands.Cog, name="weather"):
                             datetime.fromtimestamp(day['dt']).strftime('%A'))
 
                         weather_dict['conditions'].append(conditions)
-                        weather_df = pd.DataFrame.from_dict(weather_dict)
-                        print(weather_df)
-                        if country_code == 'US':
+                        if user_location.isnumeric():
                             embed = discord.Embed(title=f"Forecast for {zipcode['place_name']}, {zipcode['state_name']}",
                                                   color=discord.Color.blue())
-                        elif country_code != 'US':
+                        elif ~user_location.isnumeric():
                             embed = discord.Embed(title=f"Forecast for {user_location}, {country_code}",
                                                   color=discord.Color.blue())
                     embed.add_field(

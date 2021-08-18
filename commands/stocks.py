@@ -23,7 +23,7 @@ class stocks(commands.Cog, name="stocks"):
         url = 'https://www.alphavantage.co/query'
         params = {
             f"function": "GLOBAL_QUOTE",
-            f"symbol": symbol,
+            f"symbol": str(symbol).upper(),
             f'apikey': self.token
         }
         async with aiohttp.ClientSession() as session:
@@ -39,7 +39,8 @@ class stocks(commands.Cog, name="stocks"):
                         stonks["Global Quote"]["04. low"], "USD", locale="en_US")
                     price = babel.numbers.format_currency(
                         stonks["Global Quote"]["05. price"], "USD", locale="en_US")
-                    volume = stonks['Global Quote']["06. volume"]
+                    volume = babel.numbers.format_decimal(
+                        stonks['Global Quote']["06. volume"], locale="en_US")
                     last_day = stonks["Global Quote"]["07. latest trading day"]
                     previous_close = babel.numbers.format_currency(
                         stonks["Global Quote"]["08. previous close"], "USD", locale="en_US")

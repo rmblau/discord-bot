@@ -25,7 +25,7 @@ class crypto(commands.Cog, name="crypto"):
     @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.command(name='c', aliases=['crypto'], help='Use +c and the name of the company, i.e, +c BTC.')
     async def crypto(self, context, symbol):
-        icon = f'https://icons.bitbot.tools/api/{symbol}/128x128'
+        icon = f'https://icons.bitbot.tools/api/{str(symbol).upper()}/128x128'
         # replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
         url = "https://api.nomics.com/v1/currencies/ticker"
         params = {
@@ -42,7 +42,6 @@ class crypto(commands.Cog, name="crypto"):
                     crypto = await response.json()
                     data = crypto[0]
                     print(data['logo_url'])
-                    photo = data['logo_url']
                     symbol = data["id"]
                     price = babel.numbers.format_currency(
                         data["price"],  "USD", locale="en_US")
