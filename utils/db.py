@@ -28,10 +28,10 @@ class Database():
 
 class Weather():
 
-    def insert(user_id, user_location, units, country_code):
+    def insert(user_id, user_location, country_code, units):
         session = Database.create_session(engine)
         with session as session:
-            user = User(user_id, user_location, units, country_code)
+            user = User(user_id, user_location, country_code, units)
             session.add(user)
             session.commit()
         return user

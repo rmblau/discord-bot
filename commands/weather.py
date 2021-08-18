@@ -52,11 +52,6 @@ class weather(commands.Cog, name="weather"):
         if user_location is not None:
 
             try:
-                session = db.create_session(engine)
-                with session as session:
-                    stuff = session.query(User)
-                    for people in stuff:
-                        print(people.weather_location)
                 await self.show_weather(context, user_location, country_code, units)
 
             except KeyError:
