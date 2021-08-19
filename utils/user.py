@@ -3,6 +3,7 @@ from sqlalchemy.sql.sqltypes import BigInteger
 
 from .base import Base
 
+
 class User(Base):
     __tablename__ = 'users'
 

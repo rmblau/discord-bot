@@ -1,4 +1,5 @@
 import pprint as pp
+from utils import utils
 import discord
 from discord.ext import commands
 import logging
@@ -11,6 +12,7 @@ class news(commands.Cog, name="news"):
     def __init__(self, bot) -> None:
         self.bot = bot
         self.news_token = environ['NEWS_API_KEY']
+        self.logger = utils.get_logger()
 
     @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.command(name='news', help='''responds with news about a topic
@@ -28,8 +30,12 @@ class news(commands.Cog, name="news"):
         }
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, params=params) as response:
+                print(response)
+                self.logger.info(pp.pformat(response))
                 if response.status == 200:
+                    user = context.author
                     print(response)
+                    self.logger.info(response)
                     the_news = await response.json()
                     print(the_news)
                     for article in the_news['articles']:
@@ -50,7 +56,7 @@ class news(commands.Cog, name="news"):
                             await context.send(embed=embed)
                         else:
                             print('no media found')
-                            await context.send(embed=embed)
+                            await user.send(embed=embed)
                 else:
                     await context.send(f'No articles found!')
 

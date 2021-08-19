@@ -1,22 +1,16 @@
 import pprint as pp
-import babel
+from utils.utils import get_logger
 import discord
 from discord.ext import commands
 from datetime import datetime
-
-from sqlalchemy.sql.elements import Null
 from utils.db import Database as db
-from utils.db import Weather as w
+from utils.weather import Weather as w
 from babel.units import format_unit
 import pgeocode
 from geopy.geocoders import Nominatim
 import aiohttp
 import logging
-import pandas as pd
-from utils.User import User
-from utils.base import Session, engine, Base
-import sqlalchemy.orm.session as session
-from sqlalchemy import select
+from utils.user import User
 from os import environ
 
 
@@ -24,23 +18,25 @@ class weather(commands.Cog, name="weather"):
     def __init__(self, bot) -> None:
         self.bot = bot
         self.weather_token = environ['WEATHER_API_KEY']
+        self.session = db.create_session()
+        self.logger = get_logger()
 
     @commands.cooldown(1, 3, commands.BucketType.user)
     @commands.command(name='set', help='''set variables for weather: user_location, country_code(US by default), and
     units for temp(imperial by default) invoke with +set
     ''')
     async def set(self, context, user_location, country_code='US', units='imperial'):
-        session = Session()
         user_id = context.author.id
-        with session as session:
+        with self.session as session:
             result = session.query(User.weather_location).where(
                 User.id == user_id).first()
         if result is None:
-            w.insert(user_id, user_location, country_code, units)
+            db.create_user(user_id, user_location, country_code, units)
             await context.send(
                 f"Prefered location set to {user_location} {country_code} with {units}")
         elif result is not None:
-            w.update(user_id, user_location, country_code, units)
+            db.update_user(self, user_id=user_id, user_location=user_location,
+                           country_code=country_code, units=units)
             await context.send(
                 f"Location set to {user_location} {country_code} with {units}!")
 
@@ -59,22 +55,21 @@ class weather(commands.Cog, name="weather"):
                 await context.send(f'Location not set')
         else:
             user_id = context.author.id
-            session = db.create_session(engine)
-            with session as session:
+            with self.session as session:
                 result = session.query(User.weather_location).where(
                     User.id == user_id).one()
                 session.commit()
-            print(f'Result is:{result}')
+            self.logger.info(f'Result is:{result}')
 
             if result is None:
 
                 await context.send(f'Prefered location not set, please set with "+set"')
 
             elif result is not None:
-                user_location = w.get_location(user_id)[0]
-                units = w.get_units(user_id)[0]
-                country_code = w.get_country_code(user_id)[0]
-                await self.show_weather(context, user_location, country_code, units)
+                user_location = w.get_location(self, user_id=user_id)[0]
+                units = w.get_units(self, user_id=user_id)[0]
+                country_code = w.get_country_code(self, user_id=user_id)[0]
+                await self.show_weather(context, user_location, country_code=country_code, units=units)
 
     async def show_weather(self, context, user_location, country_code='US', units='imperial'):
         url = "http://api.openweathermap.org/data/2.5/weather"
@@ -168,13 +163,12 @@ class weather(commands.Cog, name="weather"):
 
                 await self.show_forecast(context, user_location, country_code, units)
 
-            except KeyError:
-
+            except KeyError as e:
+                self.logger.info(e)
                 await context.send(f'Location not set')
         else:
             user_id = context.author.id
-            session = db.create_session(engine)
-            with session as session:
+            with self.session as session:
                 result = session.query(User.weather_location).where(
                     User.id == user_id).one()
                 session.commit()
@@ -201,7 +195,7 @@ class weather(commands.Cog, name="weather"):
             location = geo.geocode(f'{user_location},{country_code}')
             lat = location.latitude
             lon = location.longitude
-            print(location)
+            self.logger.info(location)
         url = "https://api.openweathermap.org/data/2.5/onecall"
         params = {
             'lon': lon,

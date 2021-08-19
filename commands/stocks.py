@@ -2,13 +2,10 @@ import pprint as pp
 import discord
 from discord.ext import commands
 from discord.ext.commands import bot
-import requests
-import logging
-from datetime import datetime
 import aiohttp
 import asyncio
 import babel.numbers
-from os import environ, name
+from os import environ
 
 
 class stocks(commands.Cog, name="stocks"):
