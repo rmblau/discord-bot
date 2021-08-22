@@ -31,9 +31,10 @@ class news(commands.Cog, name="news"):
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, params=params) as response:
                 print(response)
+                user = context.author
                 self.logger.info(pp.pformat(response))
                 if response.status == 200:
-                    user = context.author
+                   
                     print(response)
                     self.logger.info(response)
                     the_news = await response.json()
@@ -53,7 +54,9 @@ class news(commands.Cog, name="news"):
                         )
                         if article['media'] is not None:
                             embed.set_image(url=article['media'])
-                            await context.send(embed=embed)
+                            await context.send("Sent in DM!")
+
+                            await user.send(embed=embed)
                         else:
                             print('no media found')
                             await user.send(embed=embed)

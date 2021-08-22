@@ -31,12 +31,12 @@ class weather(commands.Cog, name="weather"):
             result = session.query(User.weather_location).where(
                 User.id == user_id).first()
         if result is None:
-            db.create_user(user_id, user_location, country_code, units)
+            db.create_user(context.author.id, user_location, country_code, units)
             await context.send(
                 f"Prefered location set to {user_location} {country_code} with {units}")
         elif result is not None:
-            db.update_user(self, user_id=user_id, user_location=user_location,
-                           country_code=country_code, units=units)
+            db.update_user(self, user_id, user_location,
+                           country_code, units)
             await context.send(
                 f"Location set to {user_location} {country_code} with {units}!")
 
@@ -69,7 +69,7 @@ class weather(commands.Cog, name="weather"):
                 user_location = w.get_location(self, user_id=user_id)[0]
                 units = w.get_units(self, user_id=user_id)[0]
                 country_code = w.get_country_code(self, user_id=user_id)[0]
-                await self.show_weather(context, user_location, country_code=country_code, units=units)
+                await self.show_weather(context, user_location, country_code, units)
 
     async def show_weather(self, context, user_location, country_code='US', units='imperial'):
         url = "http://api.openweathermap.org/data/2.5/weather"
