@@ -1,16 +1,16 @@
 import pprint as pp
-import babel
+from utils.utils import get_logger
 import discord
 from discord.ext import commands
 from datetime import datetime
 from utils.db import Database as db
-from utils.db import Weather as w
+from utils.weather import Weather as w
 from babel.units import format_unit
 import pgeocode
 from geopy.geocoders import Nominatim
 import aiohttp
 import logging
-import pandas as pd
+from utils.user import User
 from os import environ
 
 
@@ -18,26 +18,25 @@ class weather(commands.Cog, name="weather"):
     def __init__(self, bot) -> None:
         self.bot = bot
         self.weather_token = environ['WEATHER_API_KEY']
-        self.conn = db.create_connection(environ['DB_NAME'])
+        self.session = db.create_session()
+        self.logger = get_logger()
 
     @commands.cooldown(1, 3, commands.BucketType.user)
     @commands.command(name='set', help='''set variables for weather: user_location, country_code(US by default), and
-    units for temp(imperial by default) invoke with .set
+    units for temp(imperial by default) invoke with +set
     ''')
     async def set(self, context, user_location, country_code='US', units='imperial'):
-
         user_id = context.author.id
-        cursor = self.conn.cursor()
-        sql = f"SELECT user_id FROM main WHERE user_id = ?"
-        values = (user_id,)
-        cursor.execute(sql, values)
-        result = cursor.fetchone()
+        with self.session as session:
+            result = session.query(User.weather_location).where(
+                User.id == user_id).first()
         if result is None:
-            w.insert(user_id, user_location, country_code, units)
-            context.send(
+            db.create_user(context.author.id, user_location, country_code, units)
+            await context.send(
                 f"Prefered location set to {user_location} {country_code} with {units}")
         elif result is not None:
-            w.update(user_id, user_location, country_code, units)
+            db.update_user(self, user_id, user_location,
+                           country_code, units)
             await context.send(
                 f"Location set to {user_location} {country_code} with {units}!")
 
@@ -47,31 +46,29 @@ class weather(commands.Cog, name="weather"):
     async def weather(self, context, user_location=None, country_code='US', units='imperial',):
 
         if user_location is not None:
-            try:
 
+            try:
                 await self.show_weather(context, user_location, country_code, units)
 
             except KeyError:
 
                 await context.send(f'Location not set')
         else:
-
             user_id = context.author.id
-            cursor = self.conn.cursor()
-            sql = f"SELECT weather_loc FROM main WHERE user_id = ?"
-            values = (user_id,)
-            cursor.execute(sql, values)
-            result = cursor.fetchone()
-            print(f'Result is:{result}')
+            with self.session as session:
+                result = session.query(User.weather_location).where(
+                    User.id == user_id).one()
+                session.commit()
+            self.logger.info(f'Result is:{result}')
 
             if result is None:
 
                 await context.send(f'Prefered location not set, please set with "+set"')
 
             elif result is not None:
-                user_location = w.get_location(user_id)[0]
-                units = w.get_units(user_id)[0]
-                country_code = w.get_country_code(user_id)[0]
+                user_location = w.get_location(self, user_id=user_id)[0]
+                units = w.get_units(self, user_id=user_id)[0]
+                country_code = w.get_country_code(self, user_id=user_id)[0]
                 await self.show_weather(context, user_location, country_code, units)
 
     async def show_weather(self, context, user_location, country_code='US', units='imperial'):
@@ -166,18 +163,15 @@ class weather(commands.Cog, name="weather"):
 
                 await self.show_forecast(context, user_location, country_code, units)
 
-            except KeyError:
-
+            except KeyError as e:
+                self.logger.info(e)
                 await context.send(f'Location not set')
         else:
-
             user_id = context.author.id
-            cursor = self.conn.cursor()
-            sql = f"SELECT weather_loc FROM main WHERE user_id = ?"
-            values = (user_id,)
-            cursor.execute(sql, values)
-            result = cursor.fetchone()
-            print(f'Result is:{result}')
+            with self.session as session:
+                result = session.query(User.weather_location).where(
+                    User.id == user_id).one()
+                session.commit()
 
             if result is None:
 
@@ -201,7 +195,7 @@ class weather(commands.Cog, name="weather"):
             location = geo.geocode(f'{user_location},{country_code}')
             lat = location.latitude
             lon = location.longitude
-            print(location)
+            self.logger.info(location)
         url = "https://api.openweathermap.org/data/2.5/onecall"
         params = {
             'lon': lon,
@@ -254,12 +248,10 @@ class weather(commands.Cog, name="weather"):
                             datetime.fromtimestamp(day['dt']).strftime('%A'))
 
                         weather_dict['conditions'].append(conditions)
-                        weather_df = pd.DataFrame.from_dict(weather_dict)
-                        print(weather_df)
-                        if country_code == 'US':
+                        if user_location.isnumeric():
                             embed = discord.Embed(title=f"Forecast for {zipcode['place_name']}, {zipcode['state_name']}",
                                                   color=discord.Color.blue())
-                        elif country_code != 'US':
+                        elif ~user_location.isnumeric():
                             embed = discord.Embed(title=f"Forecast for {user_location}, {country_code}",
                                                   color=discord.Color.blue())
                     embed.add_field(

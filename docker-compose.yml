@@ -1,4 +1,4 @@
-version: '3'
+version: '3.5'
 services:
   app:
     build: .
@@ -6,4 +6,25 @@ services:
       - .:/app
     env_file:
       - .env
+    networks:
+      - db
+    container_name: roran
     command: python3 bot.py
+
+  database:
+    image: postgres:13
+    restart: always
+    env_file:
+      - .database.env
+    volumes:
+      - database-data:/var/lib/postgresql/data/
+    networks:
+      - db
+   # ports:
+   # - 5432:5432
+    container_name: db
+volumes:
+  database-data:
+
+networks: 
+  db:

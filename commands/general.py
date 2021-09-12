@@ -2,16 +2,17 @@ from os import environ
 import discord
 from discord.ext import commands
 from discord.ext.commands.core import command
+#from discord.ext.commands import bot
+from discord.ext.commands.bot import Bot as bot
 from utils import db
 
 intents = discord.Intents.default()
 intents.members = True
-
+client = discord.Client()
 
 class general(commands.Cog, name="general"):
     def __init__(self, bot) -> None:
         self.bot = bot
-        self.conn = db.Database.create_connection(environ['DB_NAME'])
 
     @commands.command(name='onboard', help='Onboarding script')
     async def onboard(self, context):
@@ -33,6 +34,9 @@ class general(commands.Cog, name="general"):
 
         await context.send(embed=embed)
 
+    @commands.command(name="server")
+    async def servers(self,ctx):
+        await ctx.send(bot.guilds)
 
 def setup(bot):
     bot.add_cog(general(bot))
