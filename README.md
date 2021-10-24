@@ -1,4 +1,4 @@
-[![Python application](https://github.com/rmblau/discord-bot/actions/workflows/python-app.yml/badge.svg?branch=main)](https://github.com/rmblau/discord-bot/actions/workflows/python-app.yml)
+[![Python 3.8](https://github.com/rmblau/discord-bot/actions/workflows/python-app.yml/badge.svg?branch=main)](https://github.com/rmblau/discord-bot/actions/workflows/python-app.yml)
 
 ## Build Container
 
