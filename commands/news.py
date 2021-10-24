@@ -1,11 +1,14 @@
-import pprint as pp
-from utils import utils
-import discord
-from discord.ext import commands
-import logging
-import aiohttp
 import asyncio
+import logging
+import pprint as pp
 from os import environ
+
+import aiohttp
+import disnake
+from dislash.interactions import interaction
+from disnake import ApplicationCommandInteraction
+from disnake.ext import commands
+from utils import utils
 
 
 class news(commands.Cog, name="news"):
@@ -14,10 +17,10 @@ class news(commands.Cog, name="news"):
         self.news_token = environ['NEWS_API_KEY']
         self.logger = utils.get_logger()
 
-    @commands.cooldown(1, 5, commands.BucketType.user)
-    @commands.command(name='news', help='''responds with news about a topic
+    @commands.cooldown(2, 5, commands.BucketType.user)
+    @commands.slash_command(name='news', help='''responds with news about a topic
     user .news topic to get an article''')
-    async def news(self, context, *, topic):
+    async def news(self, interaction: ApplicationCommandInteraction, *, topic):
 
         url = "https://free-news.p.rapidapi.com/v1/search"
 
@@ -31,16 +34,16 @@ class news(commands.Cog, name="news"):
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, params=params) as response:
                 print(response)
-                user = context.author
+                user = interaction.author
                 self.logger.info(pp.pformat(response))
                 if response.status == 200:
-                   
+
                     print(response)
                     self.logger.info(response)
                     the_news = await response.json()
                     print(the_news)
                     for article in the_news['articles']:
-                        embed = discord.Embed(
+                        embed = disnake.Embed(
                             title=f'Top headlines'
                         )
                         embed.add_field(
@@ -54,14 +57,13 @@ class news(commands.Cog, name="news"):
                         )
                         if article['media'] is not None:
                             embed.set_image(url=article['media'])
-                            await context.send("Sent in DM!")
 
-                            await user.send(embed=embed)
+                            await interaction.response.send_message(embed=embed)
                         else:
                             print('no media found')
-                            await user.send(embed=embed)
+                            await interaction.response.send_message(embed=embed)
                 else:
-                    await context.send(f'No articles found!')
+                    await interaction.send(f'No articles found!')
 
 
 def setup(bot):

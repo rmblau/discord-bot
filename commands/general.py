@@ -1,14 +1,15 @@
-from os import environ
-import discord
-from discord.ext import commands
-from discord.ext.commands.core import command
-#from discord.ext.commands import bot
-from discord.ext.commands.bot import Bot as bot
-from utils import db
+import disnake
+from dislash import InteractionClient
+from disnake.ext import commands
+from disnake.interactions.application_command import \
+    ApplicationCommandInteraction
 
-intents = discord.Intents.default()
+intents = disnake.Intents.all()
 intents.members = True
-client = discord.Client()
+client = disnake.Client()
+inter_client = InteractionClient(
+    commands.Bot, test_guilds=[831327284479918121, 663770377906028545, 632665484692684821])
+
 
 class general(commands.Cog, name="general"):
     def __init__(self, bot) -> None:
@@ -20,10 +21,10 @@ class general(commands.Cog, name="general"):
         user = context.author
         await user.send('Hello!')
 
-    @commands.command(name='ping', help='Responds with pong')
-    async def ping(self, context):
+    @commands.slash_command(name='ping', description='Responds with pong')
+    async def ping(self, interaction: ApplicationCommandInteraction):
 
-        embed = discord.Embed(
+        embed = disnake.Embed(
         )
 
         embed.add_field(
@@ -31,12 +32,16 @@ class general(commands.Cog, name="general"):
             value=":ping_pong:",
             inline=True
         )
+        embed.add_field(
+            name='latency', value=f'{round(interaction.bot.latency * 1000)}ms')
+        await interaction.response.send_message(embed=embed)
 
-        await context.send(embed=embed)
+    @commands.slash_command(name="server")
+    async def servers(self, interaction: ApplicationCommandInteraction):
+        activeservers = client.guilds
+        for guild in activeservers:
+            await interaction.response.send_message(guild.name)
 
-    @commands.command(name="server")
-    async def servers(self,ctx):
-        await ctx.send(bot.guilds)
 
 def setup(bot):
     bot.add_cog(general(bot))
