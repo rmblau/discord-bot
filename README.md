@@ -1,3 +1,5 @@
+[![Python application](https://github.com/rmblau/discord-bot/actions/workflows/python-app.yml/badge.svg?branch=main)](https://github.com/rmblau/discord-bot/actions/workflows/python-app.yml)
+
 ## Build Container
 
 To build the container run ```docker-compose build --parallel```
