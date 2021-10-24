@@ -1,9 +1,8 @@
-import pprint as pp
+from os import environ
+
+import aiohttp
 import discord
 from discord.ext import commands
-import logging
-import aiohttp
-from os import environ
 
 
 class conversion(commands.Cog, name="stocks"):

@@ -1,8 +1,11 @@
 import os
 from os import environ
 from discord import client
+import discord
+import disnake
 from utils import utils
-from discord.ext.commands.bot import Bot
+#from discord.ext.commands.bot import Bot
+from disnake.ext.commands.bot import Bot
 from utils import db
 
 
@@ -12,22 +15,23 @@ class MyBot(Bot):
         print(f'{self.user.name} has connected to Discord!')
 
 
-client = MyBot(command_prefix='+')
+Bot = MyBot(command_prefix='+')
+
 TOKEN = environ['DISCORD_TOKEN']
 
 
 if __name__ == "__main__":
-    db.Database.create_table(db.Database)
+    # db.Database.create_table(db.Database)
     logger = utils.get_logger()
     for file in os.listdir("./commands"):
         if file.endswith(".py"):
             extension = file[:-3]
             try:
-                client.load_extension(f"commands.{extension}")
+                Bot.load_extension(f"commands.{extension}")
+                print(f"Loaded extension '{extension}'")
                 logger.info(f"Loaded extension '{extension}'")
             except Exception as e:
                 exception = f"{type(e).__name__}: {e}"
                 logger.info(
                     f"Failed to load extension {extension}\n{exception}")
-
-client.run(TOKEN)
+Bot.run(TOKEN)

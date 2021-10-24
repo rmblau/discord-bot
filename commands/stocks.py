@@ -1,11 +1,12 @@
 import pprint as pp
-import discord
-from discord.ext import commands
-from discord.ext.commands import bot
-import aiohttp
-import asyncio
-import babel.numbers
 from os import environ
+
+import aiohttp
+import babel.numbers
+import disnake
+from disnake.ext import commands
+from disnake.interactions.application_command import \
+    ApplicationCommandInteraction
 
 
 class stocks(commands.Cog, name="stocks"):
@@ -14,8 +15,8 @@ class stocks(commands.Cog, name="stocks"):
         self.token = environ['STOCK_API_KEY']
 
     @commands.cooldown(1, 5, commands.BucketType.user)
-    @commands.command(name='stocks', aliases=['s'], help='Use +stocks and the name of the company, i.e, +stocks GME.')
-    async def stocks(self, context, symbol):
+    @commands.slash_command(name='stocks', aliases=['s'], description='current stock prices')
+    async def stocks(self, interaction: ApplicationCommandInteraction, symbol):
         # replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
         url = 'https://www.alphavantage.co/query'
         params = {
@@ -44,8 +45,8 @@ class stocks(commands.Cog, name="stocks"):
                     change = babel.numbers.format_currency(
                         stonks["Global Quote"]["09. change"], "USD", locale="en_US")
                     change_percent = stonks["Global Quote"]["10. change percent"]
-                    embed = discord.Embed(
-                        color=discord.Color.green()
+                    embed = disnake.Embed(
+                        color=disnake.Color.green()
                     )
 
                     embed.add_field(
@@ -87,13 +88,13 @@ class stocks(commands.Cog, name="stocks"):
                         name='change percent', value=f"**{change_percent}**", inline=True
                     )
 
-                    await context.reply(embed=embed)
+                    await interaction.response.send_message(embed=embed)
                 else:
-                    await context.send(f'No company found!')
+                    await interaction.response.send_message(f'No company found!')
 
     @commands.cooldown(1, 5, commands.BucketType.user)
-    @commands.command(name='convert', aliases=['cvrt'], help='Use + convert followed by the currency you want to convert from and too, i.e, +stocks USD JPY.')
-    async def convert(self, context, from_unit, to_unit):
+    @commands.slash_command(name='convert', aliases=['cvrt'], description='currency conversion')
+    async def convert(self, interaction: ApplicationCommandInteraction, from_unit, to_unit):
         url = 'https://www.alphavantage.co/query'
         params = {
             "function": "CURRENCY_EXCHANGE_RATE",
@@ -108,15 +109,15 @@ class stocks(commands.Cog, name="stocks"):
                     from_currency = bucks["Realtime Currency Exchange Rate"]["1. From_Currency Code"]
                     to_currency = bucks["Realtime Currency Exchange Rate"]["3. To_Currency Code"]
                     exchange_rate = bucks["Realtime Currency Exchange Rate"]["5. Exchange Rate"]
-                    embed = discord.Embed(
-                        color=discord.Color.purple()
+                    embed = disnake.Embed(
+                        color=disnake.Color.purple()
                     )
                     embed.add_field(
                         name="Conversion", value=f'**1 {from_currency} is {exchange_rate} {to_currency}**', inline=False)
 
-                    await context.reply(embed=embed)
+                    await interaction.response.send_message(embed=embed)
                 else:
-                    await context.send(f'No company found!')
+                    await interaction.response.send_message(f'No company found!')
 
 
 def setup(bot):

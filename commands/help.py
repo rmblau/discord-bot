@@ -1,23 +1,12 @@
-from collections import namedtuple
-from os import environ
-import discord
-from discord import channel
-from discord.ext import commands
-from discord.ext.commands import bot
-from discord.ext.commands.core import Command, command, hooked_wrapped_callback
-from discord.ext.commands.help import HelpCommand
-from utils import db
-import sqlite3
-
-intents = discord.Intents.default()
-intents.members = True
+import disnake
+from disnake.ext import commands
 
 
 class Help(commands.MinimalHelpCommand):
 
-    @commands.cooldown(1, 5, commands.BucketType.user)
+    @commands.cooldown(2, 5, commands.BucketType.user)
     async def send_command_help(self, command):
-        embed = discord.Embed(title=self.get_command_signature(command))
+        embed = disnake.Embed(title=self.get_command_signature(command))
         embed.add_field(name="Help", value=command.help)
         aliases = command.aliases
         if aliases:

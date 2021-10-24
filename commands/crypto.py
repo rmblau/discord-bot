@@ -1,14 +1,10 @@
-import pprint as pp
-import re
-import discord
-from discord.ext import commands
-from discord.ext.commands import bot, group
-import requests
-import logging
-import babel.numbers
+from os import environ
+
 import aiohttp
-import asyncio
-from os import environ, name
+import babel.numbers
+import disnake
+from disnake.ext import commands
+from disnake.interactions.application_command import ApplicationCommandInteraction
 
 
 class crypto(commands.Cog, name="crypto"):
@@ -22,9 +18,9 @@ class crypto(commands.Cog, name="crypto"):
                 if response.status == 200:
                     return await response
 
-    @commands.cooldown(1, 5, commands.BucketType.user)
-    @commands.command(name='c', aliases=['crypto'], help='Use +c and the name of the company, i.e, +c BTC.')
-    async def crypto(self, context, symbol):
+    @commands.cooldown(2, 5, commands.BucketType.user)
+    @commands.slash_command(name='c', aliases=['crypto'], description='current crpytocurrency prices')
+    async def crypto(self, interaction: ApplicationCommandInteraction, symbol):
         icon = f'https://icons.bitbot.tools/api/{str(symbol).upper()}/128x128'
         # replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
         url = "https://api.nomics.com/v1/currencies/ticker"
@@ -54,8 +50,8 @@ class crypto(commands.Cog, name="crypto"):
                     market_cap_change_percent = babel.numbers.format_percent(
                         data["1d"]["market_cap_change_pct"], format="##.####", locale="en_US")
 
-                    embed = discord.Embed(
-                        color=discord.Color.gold()
+                    embed = disnake.Embed(
+                        color=disnake.Color.gold()
                     )
 
                     embed.add_field(
@@ -78,7 +74,7 @@ class crypto(commands.Cog, name="crypto"):
                         name='market cap change percent', value=f"**{market_cap_change_percent}**")
 
                     embed.set_thumbnail(url=icon)
-                    await context.reply(embed=embed)
+                    await interaction.response.send_message(embed=embed)
 
 
 def setup(bot):

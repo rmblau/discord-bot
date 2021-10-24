@@ -19,7 +19,7 @@ class Database():
             session.commit()
         return user
 
-    def update_user(self,user_id, user_location, country_code='US', units='imperial'):
+    def update_user(self, user_id, user_location, country_code='US', units='imperial'):
 
         with Session() as session:
             user = session.query(User).filter(User.id == user_id).update({

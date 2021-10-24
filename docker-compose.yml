@@ -20,8 +20,6 @@ services:
       - database-data:/var/lib/postgresql/data/
     networks:
       - db
-   # ports:
-   # - 5432:5432
     container_name: db
 volumes:
   database-data:
