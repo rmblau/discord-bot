@@ -1,3 +1,6 @@
+from disnake.ext.commands import context
+from builtins import Exception, help
+from pprint import pprint
 import logging
 import pprint as pp
 from datetime import datetime
@@ -5,6 +8,7 @@ from os import environ
 
 import aiohttp
 import disnake
+from disnake.ext.commands.errors import CommandInvokeError
 import pgeocode
 from babel.units import format_unit
 from disnake.ext import commands
@@ -34,7 +38,7 @@ class weather(commands.Cog, name="weather"):
             result = session.query(User.weather_location).where(
                 User.id == user_id).first()
         if result is None:
-            db.create_user(interaction.author.id, user_location,
+            db.create_user(user_id, user_location,
                            country_code, units)
             await interaction.response.send_message(
                 f"Prefered location set to {user_location} {country_code} with {units}")
@@ -46,8 +50,6 @@ class weather(commands.Cog, name="weather"):
 
     @commands.cooldown(2, 5, commands.BucketType.user)
     @commands.slash_command(name='w', description='current weather')
-    # @commands.command(name='w', help='''responds with weather at user location
-    # after setting a location one can call the weather with +w or with +w <postal code> for a different location''')
     async def weather(self, interaction: ApplicationCommandInteraction, user_location=None, country_code='US', units='imperial',):
 
         if user_location is not None:
@@ -55,9 +57,9 @@ class weather(commands.Cog, name="weather"):
             try:
                 await self.show_weather(interaction, user_location, country_code, units)
 
-            except KeyError:
+            except Exception as e:
 
-                await interaction.send(f'Location not set')
+                self.logger.info(e)
         else:
             user_id = interaction.author.id
             with self.session as session:
@@ -90,6 +92,13 @@ class weather(commands.Cog, name="weather"):
                 'units': units,
                 'appid': self.weather_token
             }
+        elif ~user_location.isnumeric():
+            params = {
+                'q': user_location,
+                'state code': country_code,
+                'units': units,
+                'appid': self.weather_token
+            }
 
         elif country_code != 'US':
 
@@ -104,7 +113,7 @@ class weather(commands.Cog, name="weather"):
                 if response.status == 200:
                     weather = await response.json()
                     color = disnake.Color.blue()
-                    logging.info(pp.pformat(weather))
+                    self.logger.info(pp.pformat(weather))
                     huminity = weather['main']['humidity']
                     high = weather['main']['temp_max']
                     low = weather['main']['temp_min']
@@ -128,14 +137,14 @@ class weather(commands.Cog, name="weather"):
                         low = format_fahrenheit(low)
                     weather_icon = weather['weather'][0]['icon']
                     icon_url = f'http://openweathermap.org/img/wn/{weather_icon}@2x.png'
-                    if country_code == 'US':
+                    if country_code == 'US' and user_location.isnumeric():
                         embed = disnake.Embed(
-                            title=f"Weather in {zipcode['place_name']}, {zipcode['state_name']}",
+                            title=f"Weather in {zipcode['place_name']}",
                             color=color
                         )
                     else:
                         embed = disnake.Embed(
-                            title=f"Weather in {name}, {country}",
+                            title=f"Weather in {name}",
                             color=color
                         )
                     embed.add_field(
@@ -167,9 +176,8 @@ class weather(commands.Cog, name="weather"):
 
                 await self.show_forecast(interaction, user_location, country_code, units)
 
-            except KeyError as e:
+            except Exception as e:
                 self.logger.info(e)
-                await interaction.response.send_message(f'Location not set')
         else:
             user_id = interaction.author.id
             with self.session as session:
@@ -276,7 +284,7 @@ class weather(commands.Cog, name="weather"):
 
                     embed.set_footer(
                         icon_url=icon_url,
-                        text=f'Currently {weather["current"]["temp"]} Feels like {weather["current"]["feels_like"]}')
+                        text=f'Currently {round(weather["current"]["temp"])}° Feels like {round(weather["current"]["feels_like"])}°')
                 await interaction.response.send_message(embed=embed)
 
 
@@ -288,7 +296,7 @@ def format_celcius(temp):
 
 
 def format_fahrenheit(temp):
-    f = format_unit(f'{temp} ', 'temperature-fahrenheit',
+    f = format_unit(f'{round(temp)} ', 'temperature-fahrenheit',
                     'short', locale='en_US')
 
     return f

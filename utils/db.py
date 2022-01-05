@@ -1,4 +1,6 @@
+from disnake.interactions.base import Interaction
 from utils.user import User
+from utils.quote import Quote
 from utils.base import Session, engine, Base
 
 

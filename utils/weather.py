@@ -1,6 +1,10 @@
+from datetime import datetime
+
+from sqlalchemy.sql.sqltypes import String
 from utils.user import User
 from utils.db import Database as db
 from .base import Session
+from dataclasses import dataclass
 
 
 class Weather():
@@ -25,3 +29,14 @@ class Weather():
                 User.id == user_id).first()
             session.commit()
         return user
+
+
+@dataclass
+class WeatherConditions:
+    dt: datetime
+    temp: str
+    min: str
+    max: str
+    night: str
+    feels_like: str
+    conditions: str

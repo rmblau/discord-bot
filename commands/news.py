@@ -18,8 +18,7 @@ class news(commands.Cog, name="news"):
         self.logger = utils.get_logger()
 
     @commands.cooldown(2, 5, commands.BucketType.user)
-    @commands.slash_command(name='news', help='''responds with news about a topic
-    user .news topic to get an article''')
+    @commands.slash_command(name='news', description='news stories')
     async def news(self, interaction: ApplicationCommandInteraction, *, topic):
 
         url = "https://free-news.p.rapidapi.com/v1/search"
@@ -34,7 +33,7 @@ class news(commands.Cog, name="news"):
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, params=params) as response:
                 print(response)
-                user = interaction.author
+                #user = interaction.author
                 self.logger.info(pp.pformat(response))
                 if response.status == 200:
 
@@ -58,12 +57,12 @@ class news(commands.Cog, name="news"):
                         if article['media'] is not None:
                             embed.set_image(url=article['media'])
 
-                            await interaction.response.send_message(embed=embed)
+                            await interaction.author.send(embed=embed)
                         else:
                             print('no media found')
                             await interaction.response.send_message(embed=embed)
                 else:
-                    await interaction.send(f'No articles found!')
+                    await interaction.response.send_message(f'No articles found!')
 
 
 def setup(bot):
