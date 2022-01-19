@@ -2,6 +2,7 @@ from utils import quote
 from utils.quote import Quote
 from utils.db import Database as db
 from datetime import datetime
+from sqlalchemy import select
 
 
 def add_quote(quote):
@@ -23,9 +24,8 @@ def get_quote(quote_id):
 
 def get_quotes():
     with db.create_session() as session:
-        result = session.query(Quote.quote)
-        session.commit()
-    return result
+        for row in session.query(Quote.quote).all():
+            yield row
 
 
 def get_quote_time_stamp(quote_id):

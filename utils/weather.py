@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy.sql.sqltypes import String
 from utils.user import User
 from utils.db import Database as db
-from .base import Session
+from babel.units import format_unit
 from dataclasses import dataclass
 
 
@@ -29,6 +29,16 @@ class Weather():
                 User.id == user_id).first()
             session.commit()
         return user
+
+    def format_celcius(temp):
+        celcius = format_unit(
+            f'{temp} ', 'temperature-celsius', 'short', locale='en_US')
+        return celcius
+
+    def format_fahrenheit(temp):
+        f = format_unit(f'{round(temp)} ', 'temperature-fahrenheit',
+                        'short', locale='en_US')
+        return f
 
 
 @dataclass

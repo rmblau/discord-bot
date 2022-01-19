@@ -10,7 +10,6 @@ import aiohttp
 import disnake
 from disnake.ext.commands.errors import CommandInvokeError
 import pgeocode
-from babel.units import format_unit
 from disnake.ext import commands
 from disnake.interactions.application_command import \
     ApplicationCommandInteraction
@@ -121,20 +120,19 @@ class weather(commands.Cog, name="weather"):
                     feels_like = weather['main']['feels_like']
                     current_conditions = weather['weather'][0]['description']
                     name = weather['name']
-                    country = weather['sys']['country']
                     if units == 'metric':
-                        current_temp = format_celcius(current_temp)
-                        feels_like = format_celcius(
+                        current_temp = w.format_celcius(current_temp)
+                        feels_like = w.format_celcius(
                             feels_like)
-                        high = format_celcius(high)
-                        low = format_celcius(low)
+                        high = w.format_celcius(high)
+                        low = w.format_celcius(low)
                     else:
-                        current_temp = format_fahrenheit(
+                        current_temp = w.format_fahrenheit(
                             current_temp)
-                        feels_like = format_fahrenheit(
+                        feels_like = w.format_fahrenheit(
                             feels_like)
-                        high = format_fahrenheit(high)
-                        low = format_fahrenheit(low)
+                        high = w.format_fahrenheit(high)
+                        low = w.format_fahrenheit(low)
                     weather_icon = weather['weather'][0]['icon']
                     icon_url = f'http://openweathermap.org/img/wn/{weather_icon}@2x.png'
                     if country_code == 'US' and user_location.isnumeric():
@@ -222,44 +220,17 @@ class weather(commands.Cog, name="weather"):
                     weather = await response.json()
                     weather_icon = weather['current']['weather'][0]['icon']
                     icon_url = f'http://openweathermap.org/img/wn/{weather_icon}@2x.png'
-                    weather_forcast = weather['daily']
-                    weather_dict = {
-                        'dt': [],
-                        'temp': [],
-                        'min': [],
-                        'max': [],
-                        'night': [],
-                        'feels_like': [],
-                        'conditions': []
-
-                    }
-                    for day in weather_forcast:
-
-                        conditions = day['weather'][0]['description']
-                        if units == 'metric':
-                            temp = format_celcius(day['temp']['day'])
-                            low = format_celcius(day['temp']['min'])
-                            high = format_celcius(day['temp']['max'])
-                            night = format_celcius(day['temp']['night'])
-                            feels_like = format_celcius(
-                                weather['current']['feels_like'])
-                        else:
-                            temp = format_fahrenheit(day['temp']['day'])
-                            low = format_fahrenheit(day['temp']['min'])
-                            high = format_fahrenheit(day['temp']['max'])
-                            night = format_fahrenheit(day['temp']['night'])
-                            feels_like = format_fahrenheit(
-                                weather['current']['feels_like'])
-                        weather_dict['temp'].append(temp)
-                        weather_dict['min'].append(low)
-                        weather_dict['max'].append(high)
-                        weather_dict['night'].append(night)
-                        weather_dict['feels_like'].append(feels_like)
-
-                        weather_dict['dt'].append(
-                            datetime.fromtimestamp(day['dt']).strftime('%A'))
-
-                        weather_dict['conditions'].append(conditions)
+                    weather_forecast = weather['daily']
+                    conditions = [conditions['weather'][0]['description'] for conditions in weather_forecast]
+                    day = [datetime.fromtimestamp(day['dt']).strftime('%A') for day in weather_forecast]
+                    
+                    if units == 'metric':
+                        max = [w.format_celcius(max['temp']['max']) for max in weather_forecast]   
+                        min = [w.format_celcius(min['temp']['min']) for min in weather_forecast]
+                    else:
+                        max = [w.format_fahrenheit(max['temp']['max']) for max in weather_forecast]   
+                        min = [w.format_fahrenheit(min['temp']['min']) for min in weather_forecast]
+                        
                         if user_location.isnumeric():
                             embed = disnake.Embed(title=f"Forecast for {zipcode['place_name']}, {zipcode['state_name']}",
                                                   color=disnake.Color.blue())
@@ -267,39 +238,25 @@ class weather(commands.Cog, name="weather"):
                             embed = disnake.Embed(title=f"Forecast for {user_location}, {country_code}",
                                                   color=disnake.Color.blue())
                     embed.add_field(
-                        name=f'Today', value=f'**{weather_dict["max"][0]}/{weather_dict["min"][0]}\n {weather_dict["conditions"][0]}**')
+                        name=f'Today', value=f'**{max[0]}/{min[0]}\n {conditions[0]}**')
 
                     embed.add_field(
-                        name=f'Tomorrow', value=f'**{weather_dict["max"][1]}/{weather_dict["min"][1]}\n {weather_dict["conditions"][1]}**')
+                        name=f'Tomorrow', value=f'**{max[1]}/{min[1]}\n {conditions[1]}**')
                     embed.add_field(
-                        name=f'{weather_dict["dt"][2]}', value=f'**{weather_dict["max"][2]}/{weather_dict["min"][2]} \n{weather_dict["conditions"][2]}**')
+                        name=f'{day[2]}', value=f'**{max[2]}/{min[2]} \n{conditions[2]}**')
                     embed.add_field(
-                        name=f'{weather_dict["dt"][3]}', value=f'**{weather_dict["max"][3]}/{weather_dict["min"][3]} \n{weather_dict["conditions"][3]}**')
+                        name=f'{day[3]}', value=f'**{max[3]}/{min[3]} \n{conditions[3]}**')
                     embed.add_field(
-                        name=f'{weather_dict["dt"][4]}', value=f'** {weather_dict["max"][4]}/{weather_dict["min"][4]} \n{weather_dict["conditions"][4]}**')
+                        name=f'{day[4]}', value=f'** {max[4]}/{min[4]} \n{conditions[4]}**')
                     embed.add_field(
-                        name=f'{weather_dict["dt"][5]}', value=f'** {weather_dict["max"][5]}/{weather_dict["min"][5]} \n{weather_dict["conditions"][5]}**')
+                        name=f'{day[5]}', value=f'** {max[5]}/{min[5]} \n{conditions[5]}**')
                     embed.add_field(
-                        name=f'{weather_dict["dt"][6]}', value=f'** {weather_dict["max"][6]}/{weather_dict["min"][6]} \n{weather_dict["conditions"][6]}**')
+                        name=f'{day[6]}', value=f'** {max[6]}/{min[6]} \n{conditions[6]}**')
 
                     embed.set_footer(
                         icon_url=icon_url,
                         text=f'Currently {round(weather["current"]["temp"])}° Feels like {round(weather["current"]["feels_like"])}°')
                 await interaction.response.send_message(embed=embed)
-
-
-def format_celcius(temp):
-    celcius = format_unit(
-        f'{temp} ', 'temperature-celsius', 'short', locale='en_US')
-
-    return celcius
-
-
-def format_fahrenheit(temp):
-    f = format_unit(f'{round(temp)} ', 'temperature-fahrenheit',
-                    'short', locale='en_US')
-
-    return f
 
 
 def setup(bot):
