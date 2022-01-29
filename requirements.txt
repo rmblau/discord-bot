@@ -5,5 +5,5 @@ aiohttp
 babel==2.9.1
 geopy==2.1.0
 sqlalchemy
-psycopg2
+asyncpg
 disnake==2.2.2

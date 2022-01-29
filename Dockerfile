@@ -3,12 +3,7 @@ RUN apt-get update &&  apt-get upgrade -y
 RUN apt install libpq-dev gcc -y
 RUN python3.9 -m pip install --upgrade pip
 COPY requirements.txt /app/ 
-COPY bot.py /app/
-COPY ./commands/ /app/commands/
-COPY ./utils/ /app/utils/
-COPY .env /app/.env/
-COPY ./logs/ /app/logs/
-COPY roran.sql /app/
+COPY . /app
 RUN pip install -r /app/requirements.txt
 WORKDIR /app
 CMD [ "python3", "bot.py"]

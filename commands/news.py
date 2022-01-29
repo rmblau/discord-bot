@@ -36,7 +36,6 @@ class news(commands.Cog, name="news"):
                 #user = interaction.author
                 self.logger.info(pp.pformat(response))
                 if response.status == 200:
-
                     print(response)
                     self.logger.info(response)
                     the_news = await response.json()

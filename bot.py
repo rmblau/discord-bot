@@ -3,7 +3,7 @@ import os
 from os import environ
 from utils import utils
 from disnake.ext.commands.bot import Bot
-from utils import db
+from weather import db
 
 
 class MyBot(Bot):

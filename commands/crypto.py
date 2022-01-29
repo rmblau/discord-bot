@@ -12,12 +12,6 @@ class crypto(commands.Cog, name="crypto"):
         self.bot = bot
         self.token = environ['CRYPTO_KEY']
 
-    async def get_icon(symbol):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url=f'https://cryptoicons.org/api/icon/{symbol}/200') as response:
-                if response.status == 200:
-                    return await response
-
     @commands.cooldown(2, 5, commands.BucketType.user)
     @commands.slash_command(name='c', aliases=['crypto'], description='current crpytocurrency prices')
     async def crypto(self, interaction: ApplicationCommandInteraction, symbol):

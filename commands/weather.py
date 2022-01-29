@@ -1,3 +1,4 @@
+import imp
 from disnake.ext.commands import context
 from builtins import Exception, help
 from pprint import pprint
@@ -14,10 +15,11 @@ from disnake.ext import commands
 from disnake.interactions.application_command import \
     ApplicationCommandInteraction
 from geopy.geocoders import Nominatim
-from utils.db import Database as db
-from utils.user import User
+from sqlalchemy import select
+from weather.db import Database as db
+from user.user import User
 from utils.utils import get_logger
-from utils.weather import Weather as w
+from weather.weather import Weather as w
 
 
 class weather(commands.Cog, name="weather"):
@@ -29,13 +31,14 @@ class weather(commands.Cog, name="weather"):
 
     @commands.cooldown(2, 3, commands.BucketType.user)
     @commands.slash_command(name='set', help='''set variables for weather: user_location, country_code(US by default), and
-    units for temp(imperial by default) invoke with +set
+    units for temp(imperial by default) invoke with /set
     ''')
     async def set(self, interaction: ApplicationCommandInteraction, user_location, country_code='US', units='imperial'):
         user_id = interaction.author.id
         with self.session as session:
-            result = session.query(User.weather_location).where(
-                User.id == user_id).first()
+            result = select(User.weather_location).where(
+                User.id == user_id)
+            await session.commit()
         if result is None:
             db.create_user(user_id, user_location,
                            country_code, units)
@@ -61,20 +64,24 @@ class weather(commands.Cog, name="weather"):
                 self.logger.info(e)
         else:
             user_id = interaction.author.id
-            with self.session as session:
-                result = session.query(User.weather_location).where(
-                    User.id == user_id).one()
-                session.commit()
+            async with self.session as session:
+                result = select(User.weather_location).where(
+                    User.id == user_id)
+                await session.commit()
             self.logger.info(f'Result is:{result}')
 
             if result is None:
 
-                await interaction.response.send_message(f'Prefered location not set, please set with "+set"')
+                await interaction.response.send_message(f'Prefered location not set, please set with "/set"')
 
             elif result is not None:
-                user_location = w.get_location(user_id=user_id)[0]
-                units = w.get_units(user_id=user_id)[0]
-                country_code = w.get_country_code(user_id=user_id)[0]
+
+                user_location = await w.get_location(user_id=user_id)
+                print(user_location)
+                self.logger.info(user_location)
+                units = await w.get_units(user_id=user_id)
+                country_code = await w.get_country_code(user_id=user_id)
+
                 await self.show_weather(interaction, user_location, country_code, units)
 
     async def show_weather(self, interaction: ApplicationCommandInteraction, user_location, country_code='US', units='imperial'):
@@ -84,7 +91,6 @@ class weather(commands.Cog, name="weather"):
             zipcode = nomi.query_postal_code(user_location)
             lat = zipcode['latitude']
             lon = zipcode['longitude']
-
             params = {
                 'lon': lon,
                 'lat': lat,
@@ -164,7 +170,6 @@ class weather(commands.Cog, name="weather"):
 
                     await interaction.response.send_message(embed=embed)
 
- #####THIS IS WEATHER FORCAST###############################
     @ commands.cooldown(2, 5, commands.BucketType.user)
     @ commands.slash_command(name='wf', description='7 day forecast')
     async def forecast(self, interaction: ApplicationCommandInteraction, user_location=None, country_code='US', units='imperial',):
@@ -178,9 +183,9 @@ class weather(commands.Cog, name="weather"):
                 self.logger.info(e)
         else:
             user_id = interaction.author.id
-            with self.session as session:
-                result = session.query(User.weather_location).where(
-                    User.id == user_id).one()
+            async with self.session as session:
+                result = session.execute(select(User.weather_location).where(
+                    User.id == user_id))
                 session.commit()
 
             if result is None:
@@ -188,9 +193,9 @@ class weather(commands.Cog, name="weather"):
                 await interaction.response.send_message(f'Prefered location not set, please set with "+set"')
 
             elif result is not None:
-                user_location = w.get_location(user_id)[0]
-                units = w.get_units(user_id)[0]
-                country_code = w.get_country_code(user_id)[0]
+                user_location = await w.get_location(user_id)
+                units = await w.get_units(user_id)
+                country_code = await w.get_country_code(user_id)
                 await self.show_forecast(interaction, user_location, country_code, units)
 
     async def show_forecast(self, interaction: ApplicationCommandInteraction, user_location, country_code='US', units='imperial'):
@@ -221,16 +226,22 @@ class weather(commands.Cog, name="weather"):
                     weather_icon = weather['current']['weather'][0]['icon']
                     icon_url = f'http://openweathermap.org/img/wn/{weather_icon}@2x.png'
                     weather_forecast = weather['daily']
-                    conditions = [conditions['weather'][0]['description'] for conditions in weather_forecast]
-                    day = [datetime.fromtimestamp(day['dt']).strftime('%A') for day in weather_forecast]
-                    
+                    conditions = [conditions['weather'][0]['description']
+                                  for conditions in weather_forecast]
+                    day = [datetime.fromtimestamp(day['dt']).strftime(
+                        '%A') for day in weather_forecast]
+
                     if units == 'metric':
-                        max = [w.format_celcius(max['temp']['max']) for max in weather_forecast]   
-                        min = [w.format_celcius(min['temp']['min']) for min in weather_forecast]
+                        max = [w.format_celcius(max['temp']['max'])
+                               for max in weather_forecast]
+                        min = [w.format_celcius(min['temp']['min'])
+                               for min in weather_forecast]
                     else:
-                        max = [w.format_fahrenheit(max['temp']['max']) for max in weather_forecast]   
-                        min = [w.format_fahrenheit(min['temp']['min']) for min in weather_forecast]
-                        
+                        max = [w.format_fahrenheit(
+                            max['temp']['max']) for max in weather_forecast]
+                        min = [w.format_fahrenheit(
+                            min['temp']['min']) for min in weather_forecast]
+
                         if user_location.isnumeric():
                             embed = disnake.Embed(title=f"Forecast for {zipcode['place_name']}, {zipcode['state_name']}",
                                                   color=disnake.Color.blue())

@@ -4,8 +4,9 @@ from disnake.ext import commands
 from disnake.interactions.application_command import \
     ApplicationCommandInteraction
 from disnake.ext.commands.errors import CommandInvokeError
-from utils.db import Database as db
+from weather.db import Database as db
 import pprint
+
 
 class quotes(commands.Cog, name="quotes"):
     def __init__(self, bot) -> None:
