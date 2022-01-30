@@ -35,17 +35,17 @@ class weather(commands.Cog, name="weather"):
     ''')
     async def set(self, interaction: ApplicationCommandInteraction, user_location, country_code='US', units='imperial'):
         user_id = interaction.author.id
-        with self.session as session:
-            result = select(User.weather_location).where(
-                User.id == user_id)
+        async with self.session as session:
+            result = session.execute(select(User.weather_location).where(
+                User.id == user_id))
             await session.commit()
         if result is None:
-            db.create_user(user_id, user_location,
+            await db.create_user(user_id, user_location,
                            country_code, units)
             await interaction.response.send_message(
                 f"Prefered location set to {user_location} {country_code} with {units}")
         elif result is not None:
-            db.update_user(self, user_id, user_location,
+            await db.update_user(self, user_id, user_location,
                            country_code, units)
             await interaction.response.send_message(
                 f"Location set to {user_location} {country_code} with {units}!")
