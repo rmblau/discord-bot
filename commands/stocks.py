@@ -9,7 +9,7 @@ from disnake.interactions.application_command import \
     ApplicationCommandInteraction
 
 
-class stocks(commands.Cog, name="stocks"):
+class Stocks(commands.Cog, name="stocks"):
     def __init__(self, bot) -> None:
         self.bot = bot
         self.token = environ['STOCK_API_KEY']
@@ -117,8 +117,8 @@ class stocks(commands.Cog, name="stocks"):
 
                     await interaction.response.send_message(embed=embed)
                 else:
-                    await interaction.response.send_message(f'No company found!')
+                    await interaction.response.send_message('No company found!')
 
 
 def setup(bot):
-    bot.add_cog(stocks(bot))
+    bot.add_cog(Stocks(bot))

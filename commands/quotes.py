@@ -1,5 +1,5 @@
 import disnake
-from utils.quotes import add_quote, get_quote, get_quote_time_stamp, get_quotes
+from quotes.quotes import add_quote, get_quote, get_quote_time_stamp, get_quotes
 from disnake.ext import commands
 from disnake.interactions.application_command import \
     ApplicationCommandInteraction
@@ -8,7 +8,7 @@ from weather.db import Database as db
 import pprint
 
 
-class quotes(commands.Cog, name="quotes"):
+class Quotes(commands.Cog, name="quotes"):
     def __init__(self, bot) -> None:
         self.bot = bot
         self.session = db.create_session()
@@ -39,7 +39,7 @@ class quotes(commands.Cog, name="quotes"):
         try:
             embed = disnake.Embed(title="")
             embed.add_field(
-                name="Quote", value=f"{pprint.pformat(list(get_quotes()))}", inline=False)
+                name="Quote", value=f"{pprint.pformat([i async for i in get_quotes()])}", inline=False)
             await interaction.response.send_message(embed=embed)
         except CommandInvokeError as e:
             await interaction.response.send_message(e)

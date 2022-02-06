@@ -1,9 +1,13 @@
 #!/usr/local/bin/python3
+import base64
 import os
 from os import environ
+
+from sqlalchemy import select
 from utils import utils
 from disnake.ext.commands.bot import Bot
 from weather import db
+from kubernetes import client, config
 
 
 class MyBot(Bot):
@@ -15,7 +19,7 @@ class MyBot(Bot):
 def main():
 
     bot = MyBot(command_prefix='+')
-    token = environ['DISCORD_TOKEN']
+    token = environ["DISCORD_TOKEN"]
     # db.Database.create_table(db.Database)
     logger = utils.get_logger()
     for file in os.listdir("./commands"):
@@ -31,7 +35,6 @@ def main():
                     f"Failed to load extension {extension}\n{exception}")
                 print(f"Failed to load extension {extension}\n{exception}")
     bot.run(token)
-
 
 if __name__ == "__main__":
     main()
