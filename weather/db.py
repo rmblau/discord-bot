@@ -4,7 +4,7 @@ from user.user import User
 from quotes.quote import Quote
 from user.base import Session, engine, Base
 import asyncio
-from sqlalchemy import select, update
+from sqlalchemy import select, update, insert
 
 import weather
 
@@ -20,8 +20,9 @@ class Database():
 
     async def create_user(user_id, user_location, country_code='US', units='imperial'):
         async with Session() as session:
-            user = User(user_id, user_location, country_code, units)
-            await session.add(user)
+            user = User(id=user_id, weather_location=user_location,
+                        country_code=country_code, units=units)
+            session.add(user)
             await session.commit()
         return user
 
@@ -29,13 +30,13 @@ class Database():
 
         async with Session() as session:
             user = await session.execute(update(User).
-            where(User.id == user_id).
-            values(
-                
-                    weather_location =  user_location,
-                    country_code =  country_code,
-                    units = units
-                
+                                         where(User.id == user_id).
+                                         values(
+
+                weather_location=user_location,
+                country_code=country_code,
+                units=units
+
             ).execution_options(synchronize_session="fetch"))
 
             await session.commit()

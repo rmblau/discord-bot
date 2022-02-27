@@ -6,4 +6,4 @@ babel==2.9.1
 geopy==2.1.0
 sqlalchemy
 asyncpg
-disnake==2.2.2
+disnake==2.4.0

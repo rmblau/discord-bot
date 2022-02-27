@@ -1,4 +1,5 @@
 from os import environ
+from pprint import pp, pprint
 
 import aiohttp
 import babel.numbers
@@ -28,8 +29,10 @@ class crypto(commands.Cog, name="crypto"):
         }
         async with aiohttp.ClientSession() as session:
             async with session.get(url, params=params) as response:
+                print(response.status)
                 if response.status == 200:
                     crypto = await response.json()
+                    print(pprint(crypto))
                     data = crypto[0]
                     print(data['logo_url'])
                     symbol = data["id"]
