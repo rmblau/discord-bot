@@ -20,9 +20,12 @@ services:
       - database-data:/var/lib/postgresql/data/
     networks:
       - db
+    ports:
+      - 5433:5432
     container_name: db
 volumes:
   database-data:
 
-networks: 
-  db:
+    null
+networks:
+  db: null

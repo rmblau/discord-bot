@@ -1,13 +1,11 @@
-import asyncio
-import logging
 import pprint as pp
 from os import environ
 
 import aiohttp
 import disnake
-from dislash.interactions import interaction
 from disnake import ApplicationCommandInteraction
 from disnake.ext import commands
+
 from utils import utils
 
 
@@ -18,8 +16,7 @@ class news(commands.Cog, name="news"):
         self.logger = utils.get_logger()
 
     @commands.cooldown(2, 5, commands.BucketType.user)
-    @commands.slash_command(name='news', help='''responds with news about a topic
-    user .news topic to get an article''')
+    @commands.slash_command(name='news', description='news stories')
     async def news(self, interaction: ApplicationCommandInteraction, *, topic):
 
         url = "https://free-news.p.rapidapi.com/v1/search"
@@ -33,37 +30,36 @@ class news(commands.Cog, name="news"):
         }
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, params=params) as response:
-                print(response)
-                user = interaction.author
                 self.logger.info(pp.pformat(response))
                 if response.status == 200:
-
-                    print(response)
                     self.logger.info(response)
                     the_news = await response.json()
-                    print(the_news)
                     for article in the_news['articles']:
                         embed = disnake.Embed(
-                            title=f'Top headlines'
+                            title='Top headlines'
                         )
                         embed.add_field(
-                            name='Headline', value=f'**{article["title"]}**', inline=False
+                            name='Headline', value=f'**{article["title"]}**',
+                            inline=False
                         )
                         embed.add_field(
-                            name='Description', value=f'**{article["summary"]}**', inline=False
+                            name='Description', value=f'**{article["summary"]}**',
+                            inline=False
                         )
                         embed.add_field(
-                            name='See more:', value=f'**{article["link"]}**', inline=False
+                            name='See more:', value=f'**{article["link"]}**',
+                            inline=False
                         )
                         if article['media'] is not None:
                             embed.set_image(url=article['media'])
 
-                            await interaction.response.send_message(embed=embed)
+                            await interaction.author.send(embed=embed)
+                            await interaction.response.send_message("Message sent!")
                         else:
                             print('no media found')
                             await interaction.response.send_message(embed=embed)
                 else:
-                    await interaction.send(f'No articles found!')
+                    await interaction.response.send_message(f'No articles found!')
 
 
 def setup(bot):

@@ -1,4 +1,5 @@
 from os import environ
+from pprint import pp, pprint
 
 import aiohttp
 import babel.numbers
@@ -11,12 +12,6 @@ class crypto(commands.Cog, name="crypto"):
     def __init__(self, bot) -> None:
         self.bot = bot
         self.token = environ['CRYPTO_KEY']
-
-    async def get_icon(symbol):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url=f'https://cryptoicons.org/api/icon/{symbol}/200') as response:
-                if response.status == 200:
-                    return await response
 
     @commands.cooldown(2, 5, commands.BucketType.user)
     @commands.slash_command(name='c', aliases=['crypto'], description='current crpytocurrency prices')
@@ -34,8 +29,10 @@ class crypto(commands.Cog, name="crypto"):
         }
         async with aiohttp.ClientSession() as session:
             async with session.get(url, params=params) as response:
+                print(response.status)
                 if response.status == 200:
                     crypto = await response.json()
+                    print(pprint(crypto))
                     data = crypto[0]
                     print(data['logo_url'])
                     symbol = data["id"]
